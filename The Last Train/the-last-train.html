@@ -1,0 +1,2133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE LAST TRAIN</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Crimson+Pro:ital,wght@0,200;0,300;0,400;1,200;1,300&family=Share+Tech+Mono&display=swap');
+
+  :root {
+    --ice: #c8e8f5;
+    --snow: #eef6fb;
+    --aurora1: #7fffd4;
+    --aurora2: #a8d8ea;
+    --warm: #f5c87a;
+    --gold: #e8a84c;
+    --ui-bg: rgba(8, 20, 35, 0.82);
+    --ui-border: rgba(180, 220, 255, 0.18);
+    --ui-text: #c8e8f5;
+    --ui-accent: #7fffd4;
+    --danger: #ff6b6b;
+    --warning: #f5c87a;
+    --good: #7fffd4;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000;
+    overflow: hidden;
+    font-family: 'Rajdhani', sans-serif;
+    color: var(--ui-text);
+    user-select: none;
+  }
+
+  #canvas { display: block; width: 100vw; height: 100vh; }
+
+  /* ─── TITLE SCREEN ─── */
+  #title-screen {
+    position: fixed; inset: 0; z-index: 100;
+    background: linear-gradient(180deg, #020d1a 0%, #0a1f35 40%, #0d2a40 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: opacity 1.5s ease;
+  }
+  #title-screen.hidden { opacity: 0; pointer-events: none; }
+
+  .title-aurora {
+    position: absolute; inset: 0; overflow: hidden;
+  }
+  .aurora-band {
+    position: absolute; width: 200%; height: 120px;
+    border-radius: 50%;
+    filter: blur(40px);
+    animation: auroraDrift 8s ease-in-out infinite alternate;
+    opacity: 0.35;
+  }
+  .aurora-band:nth-child(1) {
+    background: linear-gradient(90deg, transparent, #00ffaa, #00ccff, transparent);
+    top: 15%; left: -50%;
+    animation-delay: 0s;
+  }
+  .aurora-band:nth-child(2) {
+    background: linear-gradient(90deg, transparent, #a0ffdd, #7fcfff, transparent);
+    top: 22%; left: -30%;
+    animation-delay: -3s; opacity: 0.2;
+  }
+  .aurora-band:nth-child(3) {
+    background: linear-gradient(90deg, transparent, #40ffc0, transparent);
+    top: 10%; left: -40%;
+    animation-delay: -5s; opacity: 0.15;
+  }
+  @keyframes auroraDrift {
+    from { transform: translateX(0) rotate(-2deg); }
+    to   { transform: translateX(15%) rotate(2deg); }
+  }
+
+  .title-stars {
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 10% 15%, #fff 0%, transparent 100%),
+      radial-gradient(1px 1px at 25% 8%, #c8e8f5 0%, transparent 100%),
+      radial-gradient(1px 1px at 40% 20%, #fff 0%, transparent 100%),
+      radial-gradient(1px 1px at 55% 5%, #c8e8f5 0%, transparent 100%),
+      radial-gradient(1px 1px at 70% 18%, #fff 0%, transparent 100%),
+      radial-gradient(1px 1px at 85% 10%, #c8e8f5 0%, transparent 100%),
+      radial-gradient(1px 1px at 15% 35%, #fff 0%, transparent 100%),
+      radial-gradient(1px 1px at 60% 30%, #c8e8f5 0%, transparent 100%),
+      radial-gradient(1px 1px at 80% 40%, #fff 0%, transparent 100%),
+      radial-gradient(2px 2px at 33% 12%, #fff 0%, transparent 100%),
+      radial-gradient(2px 2px at 75% 25%, #c8e8f5 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 50% 38%, #fff 0%, transparent 100%);
+  }
+
+  .title-mountain {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 55%;
+    background: linear-gradient(180deg, transparent 0%, #071525 60%);
+  }
+  .title-mountain svg { width: 100%; height: 100%; }
+
+  .title-content {
+    position: relative; z-index: 10; text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 16px;
+  }
+
+  .title-tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px; letter-spacing: 6px; color: var(--aurora1);
+    text-transform: uppercase; opacity: 0.8;
+    animation: fadeUp 1s ease 0.3s both;
+  }
+
+  .title-main {
+    font-family: 'Crimson Pro', serif;
+    font-size: clamp(52px, 9vw, 110px);
+    font-weight: 200; letter-spacing: 12px;
+    color: #fff;
+    text-shadow: 0 0 80px rgba(127,255,212,0.3), 0 0 30px rgba(200,232,245,0.4);
+    line-height: 1;
+    animation: fadeUp 1s ease 0.5s both;
+  }
+  .title-main span { color: var(--aurora1); font-weight: 300; }
+
+  .title-sub {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px; letter-spacing: 4px; color: var(--ice);
+    opacity: 0.6; font-weight: 400;
+    animation: fadeUp 1s ease 0.7s both;
+  }
+
+  .title-divider {
+    width: 80px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--aurora1), transparent);
+    margin: 8px 0;
+    animation: fadeUp 1s ease 0.9s both;
+  }
+
+  .title-lore {
+    font-family: 'Crimson Pro', serif;
+    font-size: 15px; font-style: italic; color: var(--ice);
+    opacity: 0.55; max-width: 380px; line-height: 1.7;
+    animation: fadeUp 1s ease 1.1s both;
+  }
+
+  .btn-start {
+    margin-top: 24px;
+    padding: 14px 52px;
+    background: transparent;
+    border: 1px solid rgba(127,255,212,0.5);
+    color: var(--aurora1);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px; letter-spacing: 5px; text-transform: uppercase;
+    cursor: pointer;
+    position: relative; overflow: hidden;
+    transition: all 0.3s ease;
+    animation: fadeUp 1s ease 1.3s both;
+  }
+  .btn-start::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(127,255,212,0.1), transparent);
+    transform: translateX(-100%); transition: transform 0.4s ease;
+  }
+  .btn-start:hover { border-color: var(--aurora1); box-shadow: 0 0 30px rgba(127,255,212,0.2); color: #fff; }
+  .btn-start:hover::before { transform: translateX(0); }
+
+  .title-train-anim {
+    position: absolute; bottom: 18%; left: -10%;
+    animation: trainRide 18s linear infinite;
+    opacity: 0.18;
+  }
+  @keyframes trainRide {
+    from { transform: translateX(-5vw); }
+    to   { transform: translateX(115vw); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ─── HUD ─── */
+  #hud {
+    position: fixed; inset: 0; z-index: 50; pointer-events: none;
+    opacity: 0; transition: opacity 1s ease;
+  }
+  #hud.visible { opacity: 1; }
+
+  /* Top bar */
+  #hud-top {
+    position: absolute; top: 0; left: 0; right: 0;
+    display: flex; align-items: stretch; justify-content: space-between;
+    background: linear-gradient(180deg, rgba(4,12,24,0.9) 0%, transparent 100%);
+    padding: 14px 24px 24px;
+    pointer-events: auto;
+  }
+
+  .hud-brand {
+    font-family: 'Crimson Pro', serif;
+    font-size: 18px; font-weight: 200; letter-spacing: 6px;
+    color: rgba(200,232,245,0.7);
+  }
+  .hud-brand span { color: var(--aurora1); }
+
+  .hud-clock {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+  }
+  .hud-time {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 22px; color: var(--ice); letter-spacing: 3px;
+  }
+  .hud-day {
+    font-size: 10px; letter-spacing: 4px; color: rgba(200,232,245,0.5);
+    text-transform: uppercase;
+  }
+
+  .hud-speed {
+    display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
+  }
+  .speed-val {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 22px; color: var(--aurora1); letter-spacing: 2px;
+  }
+  .speed-lbl {
+    font-size: 10px; letter-spacing: 4px; color: rgba(200,232,245,0.5);
+    text-transform: uppercase;
+  }
+
+  /* Left panel - resources */
+  #hud-left {
+    position: absolute; top: 90px; left: 16px;
+    display: flex; flex-direction: column; gap: 8px;
+    pointer-events: auto;
+  }
+
+  .resource-card {
+    background: var(--ui-bg);
+    border: 1px solid var(--ui-border);
+    border-radius: 6px;
+    padding: 10px 14px;
+    width: 160px;
+    backdrop-filter: blur(10px);
+    transition: border-color 0.3s;
+  }
+  .resource-card:hover { border-color: rgba(127,255,212,0.35); }
+
+  .res-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 6px;
+  }
+  .res-name {
+    font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+    color: rgba(200,232,245,0.55);
+  }
+  .res-val {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px; color: var(--ice);
+  }
+  .res-bar-bg {
+    width: 100%; height: 4px;
+    background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden;
+  }
+  .res-bar {
+    height: 100%; border-radius: 2px;
+    transition: width 1s ease, background 0.5s ease;
+  }
+  .res-bar.fuel   { background: linear-gradient(90deg, #f5c87a, #e8a84c); }
+  .res-bar.food   { background: linear-gradient(90deg, #7fffd4, #3ecfb0); }
+  .res-bar.heat   { background: linear-gradient(90deg, #ff9f7f, #ff6b35); }
+  .res-bar.power  { background: linear-gradient(90deg, #7fcfff, #4aabff); }
+  .res-bar.morale { background: linear-gradient(90deg, #c8a0ff, #9966ff); }
+  .res-bar.medicine { background: linear-gradient(90deg, #ff9faf, #ff6b8a); }
+  .res-bar.low { background: linear-gradient(90deg, #ff6b6b, #cc3333) !important; }
+
+  /* Right panel - passengers */
+  #hud-right {
+    position: absolute; top: 90px; right: 16px;
+    display: flex; flex-direction: column; gap: 8px;
+    pointer-events: auto; width: 200px;
+  }
+
+  .panel-card {
+    background: var(--ui-bg);
+    border: 1px solid var(--ui-border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    backdrop-filter: blur(10px);
+  }
+  .panel-title {
+    font-size: 9px; letter-spacing: 4px; text-transform: uppercase;
+    color: rgba(200,232,245,0.4); margin-bottom: 10px;
+  }
+
+  .passenger-stats {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .pstat {
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .pstat-name {
+    font-size: 11px; letter-spacing: 1px; color: var(--ice); opacity: 0.8;
+  }
+  .pstat-val {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px; color: var(--aurora1);
+  }
+
+  .weather-card .wt-main {
+    font-size: 28px; margin-bottom: 4px;
+  }
+  .weather-card .wt-desc {
+    font-size: 11px; letter-spacing: 2px; color: var(--ice); opacity: 0.6;
+  }
+  .weather-card .wt-temp {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 22px; color: var(--ice); margin-top: 6px;
+  }
+
+  /* Bottom bar */
+  #hud-bottom {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    display: flex; justify-content: center; align-items: flex-end; gap: 12px;
+    padding: 0 24px 18px;
+    background: linear-gradient(0deg, rgba(4,12,24,0.85) 0%, transparent 100%);
+    pointer-events: auto;
+  }
+
+  .action-btn {
+    background: var(--ui-bg);
+    border: 1px solid var(--ui-border);
+    border-radius: 6px;
+    padding: 10px 18px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    min-width: 80px;
+    backdrop-filter: blur(10px);
+  }
+  .action-btn:hover {
+    border-color: rgba(127,255,212,0.4);
+    background: rgba(8, 30, 55, 0.9);
+    transform: translateY(-2px);
+  }
+  .action-btn.active {
+    border-color: var(--aurora1);
+    box-shadow: 0 0 16px rgba(127,255,212,0.2);
+  }
+  .action-icon { font-size: 18px; }
+  .action-label {
+    font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+    color: rgba(200,232,245,0.55);
+  }
+
+  /* Notifications */
+  #notifications {
+    position: absolute; top: 90px; left: 50%; transform: translateX(-50%);
+    display: flex; flex-direction: column; gap: 8px; align-items: center;
+    width: 340px; pointer-events: none;
+  }
+
+  .notif {
+    background: var(--ui-bg);
+    border: 1px solid var(--ui-border);
+    border-left: 3px solid var(--aurora1);
+    border-radius: 6px; padding: 10px 14px;
+    width: 100%; backdrop-filter: blur(12px);
+    animation: notifIn 0.4s ease, notifOut 0.4s ease 3.6s both;
+    font-size: 12px; letter-spacing: 1px; color: var(--ice);
+  }
+  .notif.warning { border-left-color: var(--warning); }
+  .notif.danger  { border-left-color: var(--danger); }
+  .notif.good    { border-left-color: var(--good); }
+
+  @keyframes notifIn  { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes notifOut { from { opacity:1; } to { opacity:0; transform:translateY(-10px); } }
+
+  /* Minimap */
+  #minimap {
+    position: absolute; bottom: 80px; right: 16px;
+    width: 160px; height: 100px;
+    background: var(--ui-bg);
+    border: 1px solid var(--ui-border);
+    border-radius: 6px; overflow: hidden;
+    backdrop-filter: blur(10px);
+  }
+  #minimap canvas { width: 100%; height: 100%; }
+  .minimap-label {
+    position: absolute; top: 6px; left: 8px;
+    font-size: 8px; letter-spacing: 3px; color: rgba(200,232,245,0.4);
+    text-transform: uppercase;
+  }
+
+  /* Train view modal */
+  #train-modal {
+    position: fixed; inset: 0; z-index: 80;
+    background: rgba(2,8,18,0.92);
+    backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.4s;
+  }
+  #train-modal.open { opacity: 1; pointer-events: auto; }
+
+  .modal-inner {
+    background: rgba(8,18,32,0.95);
+    border: 1px solid var(--ui-border);
+    border-radius: 12px;
+    width: min(95vw, 820px);
+    max-height: 90vh; overflow-y: auto;
+    padding: 28px 32px;
+  }
+  .modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--ui-border); padding-bottom: 16px;
+  }
+  .modal-title {
+    font-family: 'Crimson Pro', serif;
+    font-size: 28px; font-weight: 300; letter-spacing: 4px;
+    color: var(--ice);
+  }
+  .modal-close {
+    background: none; border: 1px solid var(--ui-border);
+    color: var(--ui-text); width: 32px; height: 32px;
+    border-radius: 50%; cursor: pointer; font-size: 14px;
+    transition: all 0.2s; display: flex; align-items: center; justify-content: center;
+  }
+  .modal-close:hover { border-color: var(--danger); color: var(--danger); }
+
+  .train-sections {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  .section-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--ui-border);
+    border-radius: 8px; padding: 16px;
+    cursor: pointer; transition: all 0.25s;
+  }
+  .section-card:hover {
+    background: rgba(127,255,212,0.04);
+    border-color: rgba(127,255,212,0.3);
+    transform: translateY(-2px);
+  }
+  .section-icon { font-size: 28px; margin-bottom: 10px; }
+  .section-name {
+    font-size: 13px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--ice); margin-bottom: 6px;
+  }
+  .section-desc { font-size: 11px; color: rgba(200,232,245,0.45); line-height: 1.5; }
+  .section-status {
+    margin-top: 10px; font-size: 10px; letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .section-status.ok      { color: var(--good); }
+  .section-status.warning { color: var(--warning); }
+  .section-status.damaged { color: var(--danger); }
+
+  /* NPC roster */
+  .npc-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: 10px;
+  }
+  .npc-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--ui-border);
+    border-radius: 8px; padding: 14px;
+    transition: all 0.2s;
+  }
+  .npc-card:hover {
+    border-color: rgba(127,255,212,0.25);
+    background: rgba(127,255,212,0.03);
+  }
+  .npc-avatar { font-size: 32px; margin-bottom: 8px; }
+  .npc-name { font-size: 13px; color: var(--ice); letter-spacing: 1px; }
+  .npc-role { font-size: 10px; letter-spacing: 2px; color: rgba(200,232,245,0.45); text-transform: uppercase; margin-bottom: 8px; }
+  .npc-mood { font-size: 11px; }
+
+  /* Explore modal */
+  #explore-modal {
+    position: fixed; inset: 0; z-index: 80;
+    background: rgba(2,8,18,0.92); backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.4s;
+  }
+  #explore-modal.open { opacity: 1; pointer-events: auto; }
+
+  .explore-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 14px;
+  }
+  .explore-site {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--ui-border);
+    border-radius: 8px; padding: 20px;
+    cursor: pointer; transition: all 0.25s; position: relative;
+  }
+  .explore-site:hover {
+    background: rgba(127,255,212,0.04);
+    border-color: rgba(127,255,212,0.3);
+    transform: translateY(-2px);
+  }
+  .explore-site.explored { opacity: 0.45; pointer-events: none; }
+  .explore-distance {
+    position: absolute; top: 10px; right: 12px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px; color: rgba(200,232,245,0.45); letter-spacing: 1px;
+  }
+  .explore-icon { font-size: 32px; margin-bottom: 10px; }
+  .explore-name { font-size: 14px; letter-spacing: 2px; color: var(--ice); margin-bottom: 6px; }
+  .explore-desc { font-size: 11px; color: rgba(200,232,245,0.45); line-height: 1.5; }
+  .explore-reward {
+    margin-top: 10px; font-size: 10px; letter-spacing: 1px;
+    color: var(--aurora1);
+  }
+
+  /* Story event overlay */
+  #story-overlay {
+    position: fixed; inset: 0; z-index: 90;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(2,8,18,0.88); backdrop-filter: blur(6px);
+    opacity: 0; pointer-events: none; transition: opacity 0.6s;
+  }
+  #story-overlay.open { opacity: 1; pointer-events: auto; }
+
+  .story-card {
+    background: rgba(8,18,32,0.98);
+    border: 1px solid var(--ui-border);
+    border-radius: 12px; padding: 40px 48px;
+    max-width: 560px; text-align: center;
+  }
+  .story-icon { font-size: 52px; margin-bottom: 20px; }
+  .story-title {
+    font-family: 'Crimson Pro', serif;
+    font-size: 28px; font-weight: 300; letter-spacing: 3px;
+    color: var(--ice); margin-bottom: 14px;
+  }
+  .story-text {
+    font-family: 'Crimson Pro', serif;
+    font-size: 16px; font-style: italic; color: rgba(200,232,245,0.7);
+    line-height: 1.8; margin-bottom: 28px;
+  }
+  .story-choices { display: flex; flex-direction: column; gap: 10px; }
+  .story-choice {
+    padding: 12px 20px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--ui-border);
+    border-radius: 6px; cursor: pointer;
+    font-family: 'Rajdhani', sans-serif; font-size: 13px;
+    letter-spacing: 2px; color: var(--ice);
+    transition: all 0.2s; text-align: left;
+  }
+  .story-choice:hover { border-color: var(--aurora1); color: var(--aurora1); background: rgba(127,255,212,0.04); }
+  .story-choice-effect { font-size: 10px; color: rgba(200,232,245,0.4); margin-top: 3px; letter-spacing: 1px; }
+
+  /* Upgrade tab inside train modal */
+  .upgrade-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 12px;
+  }
+  .upgrade-card {
+    background: rgba(255,255,255,0.03); border: 1px solid var(--ui-border);
+    border-radius: 8px; padding: 16px; transition: all 0.2s; cursor: pointer;
+  }
+  .upgrade-card:hover:not(.bought) { border-color: rgba(245,200,122,0.4); background: rgba(245,200,122,0.03); transform: translateY(-2px); }
+  .upgrade-card.bought { opacity: 0.4; pointer-events: none; }
+  .upgrade-name { font-size: 13px; color: var(--ice); letter-spacing: 1px; margin-bottom: 6px; }
+  .upgrade-desc { font-size: 11px; color: rgba(200,232,245,0.45); line-height: 1.5; margin-bottom: 10px; }
+  .upgrade-cost { font-size: 11px; color: var(--gold); letter-spacing: 1px; }
+
+  /* Loading overlay */
+  #loading {
+    position: fixed; inset: 0; z-index: 200;
+    background: #020d1a;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 20px; transition: opacity 1s ease;
+  }
+  #loading.hidden { opacity: 0; pointer-events: none; }
+  .load-logo {
+    font-family: 'Crimson Pro', serif;
+    font-size: 36px; font-weight: 200; letter-spacing: 10px; color: rgba(200,232,245,0.5);
+  }
+  .load-logo span { color: var(--aurora1); }
+  .load-bar-bg {
+    width: 220px; height: 2px; background: rgba(255,255,255,0.08); border-radius: 1px;
+  }
+  .load-bar {
+    height: 100%; background: linear-gradient(90deg, var(--aurora1), #7fcfff);
+    border-radius: 1px; width: 0%;
+    transition: width 0.3s ease;
+  }
+  .load-text {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px; letter-spacing: 3px; color: rgba(200,232,245,0.35);
+    text-transform: uppercase;
+  }
+
+  /* Tabs */
+  .tab-row { display: flex; gap: 4px; margin-bottom: 20px; }
+  .tab-btn {
+    padding: 8px 18px; background: transparent;
+    border: 1px solid var(--ui-border); border-radius: 4px;
+    color: rgba(200,232,245,0.45); font-family: 'Rajdhani', sans-serif;
+    font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .tab-btn.active { border-color: var(--aurora1); color: var(--aurora1); background: rgba(127,255,212,0.05); }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(127,255,212,0.2); border-radius: 2px; }
+
+  /* Snow overlay canvas */
+  #snow-canvas {
+    position: fixed; inset: 0; z-index: 10; pointer-events: none;
+  }
+
+  /* Location indicator */
+  #location-tag {
+    position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px; letter-spacing: 4px; text-transform: uppercase;
+    color: rgba(200,232,245,0.35); pointer-events: none;
+    transition: opacity 1s ease;
+  }
+
+  /* Crosshair */
+  #crosshair {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    width: 20px; height: 20px; z-index: 45; pointer-events: none;
+    opacity: 0.4;
+  }
+  #crosshair::before, #crosshair::after {
+    content: ''; position: absolute; background: var(--aurora1);
+  }
+  #crosshair::before { top: 50%; left: 0; right: 0; height: 1px; }
+  #crosshair::after  { left: 50%; top: 0; bottom: 0; width: 1px; }
+
+  .section-tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loading">
+  <div class="load-logo">THE <span>LAST</span> TRAIN</div>
+  <div class="load-bar-bg"><div class="load-bar" id="load-bar"></div></div>
+  <div class="load-text" id="load-text">Initializing world…</div>
+</div>
+
+<!-- Snow canvas -->
+<canvas id="snow-canvas"></canvas>
+
+<!-- Three.js canvas -->
+<canvas id="canvas"></canvas>
+
+<!-- Crosshair -->
+<div id="crosshair"></div>
+
+<!-- ─── TITLE SCREEN ─── -->
+<div id="title-screen">
+  <div class="title-aurora">
+    <div class="aurora-band"></div>
+    <div class="aurora-band"></div>
+    <div class="aurora-band"></div>
+  </div>
+  <div class="title-stars"></div>
+  <div class="title-mountain">
+    <svg viewBox="0 0 1440 400" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="mgGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#0d2a40" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="#071525" stop-opacity="1"/>
+        </linearGradient>
+      </defs>
+      <polygon points="0,400 0,280 80,200 200,300 320,140 460,260 580,100 700,220 820,80 950,200 1100,120 1250,240 1380,160 1440,220 1440,400" fill="url(#mgGrad)"/>
+      <polygon points="0,400 0,340 120,290 240,340 360,260 480,320 600,240 720,300 840,220 960,290 1080,240 1200,310 1320,270 1440,310 1440,400" fill="#071525"/>
+      <!-- Snow caps -->
+      <polygon points="320,140 280,200 360,200" fill="rgba(220,240,255,0.6)"/>
+      <polygon points="580,100 545,170 615,170" fill="rgba(220,240,255,0.7)"/>
+      <polygon points="820,80 778,160 862,160" fill="rgba(220,240,255,0.75)"/>
+      <polygon points="1100,120 1060,195 1140,195" fill="rgba(220,240,255,0.6)"/>
+    </svg>
+  </div>
+  <div class="title-train-anim">
+    <svg width="320" height="50" viewBox="0 0 320 50">
+      <rect x="0" y="15" width="260" height="28" rx="4" fill="#c8e8f5" opacity="0.6"/>
+      <rect x="260" y="18" width="55" height="22" rx="2" fill="#a8d0e8" opacity="0.5"/>
+      <rect x="5" y="18" width="50" height="10" rx="2" fill="rgba(200,232,245,0.3)"/>
+      <rect x="62" y="18" width="50" height="10" rx="2" fill="rgba(200,232,245,0.3)"/>
+      <rect x="119" y="18" width="50" height="10" rx="2" fill="rgba(200,232,245,0.3)"/>
+      <circle cx="30" cy="44" r="6" fill="#7fb8d8"/>
+      <circle cx="80" cy="44" r="6" fill="#7fb8d8"/>
+      <circle cx="140" cy="44" r="6" fill="#7fb8d8"/>
+      <circle cx="190" cy="44" r="6" fill="#7fb8d8"/>
+      <circle cx="240" cy="44" r="6" fill="#7fb8d8"/>
+      <circle cx="290" cy="44" r="6" fill="#7fb8d8"/>
+    </svg>
+  </div>
+  <div class="title-content">
+    <div class="title-tag">Year 2089 · Arctic Crossing</div>
+    <div class="title-main">THE <span>LAST</span><br>TRAIN</div>
+    <div class="title-sub">Carry the last of humanity through the frozen world</div>
+    <div class="title-divider"></div>
+    <div class="title-lore">"The engines never stopped. The snow never ended. But somewhere beyond the ice — a new horizon waited."</div>
+    <button class="btn-start" id="btn-start">Begin Journey</button>
+  </div>
+</div>
+
+<!-- ─── HUD ─── -->
+<div id="hud">
+  <!-- Top -->
+  <div id="hud-top">
+    <div class="hud-brand">THE <span>LAST</span> TRAIN</div>
+    <div class="hud-clock">
+      <div class="hud-time" id="hud-time">06:00</div>
+      <div class="hud-day" id="hud-day">Day 1 · Journey Begins</div>
+    </div>
+    <div class="hud-speed">
+      <div class="speed-val" id="hud-speed">87 km/h</div>
+      <div class="speed-lbl">Train Speed</div>
+    </div>
+  </div>
+
+  <!-- Left resources -->
+  <div id="hud-left">
+    <div class="resource-card">
+      <div class="res-header">
+        <div class="res-name">⛽ Fuel</div>
+        <div class="res-val" id="val-fuel">78%</div>
+      </div>
+      <div class="res-bar-bg"><div class="res-bar fuel" id="bar-fuel" style="width:78%"></div></div>
+    </div>
+    <div class="resource-card">
+      <div class="res-header">
+        <div class="res-name">🌾 Food</div>
+        <div class="res-val" id="val-food">64%</div>
+      </div>
+      <div class="res-bar-bg"><div class="res-bar food" id="bar-food" style="width:64%"></div></div>
+    </div>
+    <div class="resource-card">
+      <div class="res-header">
+        <div class="res-name">🔥 Heat</div>
+        <div class="res-val" id="val-heat">91%</div>
+      </div>
+      <div class="res-bar-bg"><div class="res-bar heat" id="bar-heat" style="width:91%"></div></div>
+    </div>
+    <div class="resource-card">
+      <div class="res-header">
+        <div class="res-name">⚡ Power</div>
+        <div class="res-val" id="val-power">85%</div>
+      </div>
+      <div class="res-bar-bg"><div class="res-bar power" id="bar-power" style="width:85%"></div></div>
+    </div>
+    <div class="resource-card">
+      <div class="res-header">
+        <div class="res-name">💊 Medicine</div>
+        <div class="res-val" id="val-medicine">52%</div>
+      </div>
+      <div class="res-bar-bg"><div class="res-bar medicine" id="bar-medicine" style="width:52%"></div></div>
+    </div>
+    <div class="resource-card">
+      <div class="res-header">
+        <div class="res-name">🎵 Morale</div>
+        <div class="res-val" id="val-morale">73%</div>
+      </div>
+      <div class="res-bar-bg"><div class="res-bar morale" id="bar-morale" style="width:73%"></div></div>
+    </div>
+  </div>
+
+  <!-- Right panel -->
+  <div id="hud-right">
+    <div class="panel-card weather-card">
+      <div class="panel-title">Weather</div>
+      <div class="wt-main" id="wt-icon">🌨</div>
+      <div class="wt-desc" id="wt-desc">Light Snowfall</div>
+      <div class="wt-temp" id="wt-temp">-34°C</div>
+    </div>
+    <div class="panel-card">
+      <div class="panel-title">Passengers</div>
+      <div class="passenger-stats">
+        <div class="pstat"><span class="pstat-name">Total</span><span class="pstat-val" id="ps-total">847</span></div>
+        <div class="pstat"><span class="pstat-name">Healthy</span><span class="pstat-val" id="ps-healthy">811</span></div>
+        <div class="pstat"><span class="pstat-name">Sick</span><span class="pstat-val" id="ps-sick">36</span></div>
+        <div class="pstat"><span class="pstat-name">Working</span><span class="pstat-val" id="ps-working">212</span></div>
+        <div class="pstat"><span class="pstat-name">Resting</span><span class="pstat-val" id="ps-resting">635</span></div>
+      </div>
+    </div>
+    <div class="panel-card">
+      <div class="panel-title">Distance Log</div>
+      <div class="passenger-stats">
+        <div class="pstat"><span class="pstat-name">Traveled</span><span class="pstat-val" id="ps-dist">2,340 km</span></div>
+        <div class="pstat"><span class="pstat-name">Region</span><span class="pstat-val" id="ps-region" style="font-size:10px">Arctic Plains</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Minimap -->
+  <div id="minimap">
+    <canvas id="minimap-canvas"></canvas>
+    <div class="minimap-label">Route</div>
+  </div>
+
+  <!-- Notifications -->
+  <div id="notifications"></div>
+
+  <!-- Location tag -->
+  <div id="location-tag" id="location-tag">Approaching Sector 7 — Arctic Plains</div>
+
+  <!-- Bottom actions -->
+  <div id="hud-bottom">
+    <button class="action-btn" id="btn-train" onclick="openTrainModal()">
+      <div class="action-icon">🚂</div>
+      <div class="action-label">Train</div>
+    </button>
+    <button class="action-btn" id="btn-explore" onclick="openExploreModal()">
+      <div class="action-icon">🔭</div>
+      <div class="action-label">Explore</div>
+    </button>
+    <button class="action-btn" id="btn-crew" onclick="openCrewTab()">
+      <div class="action-icon">👥</div>
+      <div class="action-label">Crew</div>
+    </button>
+    <button class="action-btn" id="btn-research" onclick="openResearchTab()">
+      <div class="action-icon">🔬</div>
+      <div class="action-label">Research</div>
+    </button>
+    <button class="action-btn" onclick="toggleCamera()">
+      <div class="action-icon">🎬</div>
+      <div class="action-label">Camera</div>
+    </button>
+    <button class="action-btn" onclick="togglePause()">
+      <div class="action-icon" id="pause-icon">⏸</div>
+      <div class="action-label" id="pause-lbl">Pause</div>
+    </button>
+  </div>
+</div>
+
+<!-- ─── TRAIN MODAL ─── -->
+<div id="train-modal">
+  <div class="modal-inner">
+    <div class="modal-header">
+      <div class="modal-title">🚂 Train Management</div>
+      <button class="modal-close" onclick="closeModal('train-modal')">✕</button>
+    </div>
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="switchTab('train','sections')">Sections</button>
+      <button class="tab-btn" onclick="switchTab('train','crew')">Crew</button>
+      <button class="tab-btn" onclick="switchTab('train','upgrades')">Upgrades</button>
+    </div>
+
+    <!-- Sections tab -->
+    <div class="tab-pane active" id="train-tab-sections">
+      <div class="train-sections" id="train-sections-grid"></div>
+    </div>
+
+    <!-- Crew tab -->
+    <div class="tab-pane" id="train-tab-crew">
+      <div class="npc-grid" id="npc-grid"></div>
+    </div>
+
+    <!-- Upgrades tab -->
+    <div class="tab-pane" id="train-tab-upgrades">
+      <div class="upgrade-grid" id="upgrade-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── EXPLORE MODAL ─── -->
+<div id="explore-modal">
+  <div class="modal-inner">
+    <div class="modal-header">
+      <div class="modal-title">🔭 Exploration Sites</div>
+      <button class="modal-close" onclick="closeModal('explore-modal')">✕</button>
+    </div>
+    <p style="font-size:12px;color:rgba(200,232,245,0.45);margin-bottom:20px;letter-spacing:1px;">
+      Send scouts to abandoned locations. Each expedition takes time and risks lives, but yields vital resources.
+    </p>
+    <div class="explore-grid" id="explore-grid"></div>
+  </div>
+</div>
+
+<!-- ─── STORY OVERLAY ─── -->
+<div id="story-overlay">
+  <div class="story-card" id="story-card">
+    <div class="story-icon" id="story-icon">⚡</div>
+    <div class="story-title" id="story-title">Power Surge</div>
+    <div class="story-text" id="story-text">A text here</div>
+    <div class="story-choices" id="story-choices"></div>
+  </div>
+</div>
+
+<!-- Three.js + game -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+
+// ═══════════════════════════════════════════════
+//  GAME STATE
+// ═══════════════════════════════════════════════
+const G = {
+  paused: false,
+  day: 1,
+  time: 6 * 60, // minutes
+  speed: 87,
+  distanceTraveled: 2340,
+  resources: {
+    fuel:     78,
+    food:     64,
+    heat:     91,
+    power:    85,
+    medicine: 52,
+    morale:   73,
+  },
+  passengers: {
+    total:   847,
+    healthy: 811,
+    sick:    36,
+    working: 212,
+    resting: 635,
+  },
+  weather: { type: 'snow', temp: -34, intensity: 0.4 },
+  regions: ['Arctic Plains','Frozen Tundra','Ice Valley','Glacier Pass','Snowstorm Corridor','Mountain Descent','Crystal Fields','Frozen Ocean Shore'],
+  regionIdx: 0,
+  cameraMode: 0, // 0=side, 1=chase, 2=cinematic, 3=aerial
+  upgrades: {},
+  exploredSites: {},
+};
+
+const WEATHER_TYPES = [
+  { type:'clear',    icon:'☀️', desc:'Clear Skies',     temp:-28, intensity:0.05 },
+  { type:'snow',     icon:'🌨', desc:'Light Snowfall',  temp:-34, intensity:0.4  },
+  { type:'blizzard', icon:'❄️', desc:'Blizzard',        temp:-48, intensity:1.0  },
+  { type:'aurora',   icon:'🌌', desc:'Aurora Borealis', temp:-31, intensity:0.2  },
+  { type:'fog',      icon:'🌫', desc:'Ice Fog',         temp:-39, intensity:0.3  },
+];
+
+// ═══════════════════════════════════════════════
+//  THREE.JS SETUP
+// ═══════════════════════════════════════════════
+const canvas = document.getElementById('canvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+renderer.outputEncoding = THREE.sRGBEncoding;
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0xc8dff0, 80, 320);
+
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(0, 12, 35);
+camera.lookAt(0, 4, 0);
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ─── LIGHTING ───
+const ambientLight = new THREE.AmbientLight(0xb0d8f0, 0.8);
+scene.add(ambientLight);
+
+const sunLight = new THREE.DirectionalLight(0xfff5d0, 2.2);
+sunLight.position.set(60, 80, -40);
+sunLight.castShadow = true;
+sunLight.shadow.mapSize.set(2048, 2048);
+sunLight.shadow.camera.far = 300;
+sunLight.shadow.camera.left = -80;
+sunLight.shadow.camera.right = 80;
+sunLight.shadow.camera.top = 80;
+sunLight.shadow.camera.bottom = -80;
+scene.add(sunLight);
+
+const fillLight = new THREE.DirectionalLight(0xaad4f5, 0.4);
+fillLight.position.set(-40, 20, 30);
+scene.add(fillLight);
+
+const warmLight = new THREE.PointLight(0xffcc66, 1.5, 30);
+warmLight.position.set(0, 6, 0);
+scene.add(warmLight);
+
+// ─── SKY ───
+const skyGeo = new THREE.SphereGeometry(400, 32, 32);
+const skyMat = new THREE.MeshBasicMaterial({
+  color: 0x7ab8e0,
+  side: THREE.BackSide
+});
+const sky = new THREE.Mesh(skyGeo, skyMat);
+scene.add(sky);
+
+// Sky gradient using shader
+const skyShaderMat = new THREE.ShaderMaterial({
+  uniforms: {
+    topColor:    { value: new THREE.Color(0x1a3a5c) },
+    bottomColor: { value: new THREE.Color(0x8ecae6) },
+    offset:      { value: 0.2 },
+    exponent:    { value: 0.5 },
+    time:        { value: 0 },
+  },
+  vertexShader: `
+    varying vec3 vWorldPosition;
+    void main() {
+      vec4 worldPos = modelMatrix * vec4(position, 1.0);
+      vWorldPosition = worldPos.xyz;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+  fragmentShader: `
+    uniform vec3 topColor, bottomColor;
+    uniform float offset, exponent, time;
+    varying vec3 vWorldPosition;
+    void main() {
+      float h = normalize(vWorldPosition).y + offset;
+      float t = max(pow(max(h, 0.0), exponent), 0.0);
+      vec3 col = mix(bottomColor, topColor, t);
+      // aurora shimmer
+      float aurora = sin(vWorldPosition.x * 0.01 + time * 0.5) *
+                     cos(vWorldPosition.z * 0.008 + time * 0.3) * 0.5 + 0.5;
+      aurora *= smoothstep(0.3, 0.7, h);
+      col = mix(col, vec3(0.5, 1.0, 0.8), aurora * 0.12);
+      gl_FragColor = vec4(col, 1.0);
+    }
+  `,
+  side: THREE.BackSide,
+});
+skyGeo.applyMatrix4(new THREE.Matrix4().makeRotationX(Math.PI));
+sky.material = skyShaderMat;
+
+// ─── TERRAIN ───
+function makeTerrain() {
+  const geo = new THREE.PlaneGeometry(600, 200, 120, 40);
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i);
+    const z = pos.getZ(i);
+    const h = Math.sin(x * 0.04) * 3 + Math.sin(x * 0.012 + z * 0.02) * 8
+            + Math.cos(z * 0.05) * 2 + Math.sin(x * 0.007 + 1.3) * 12
+            + (Math.random() - 0.5) * 0.5;
+    pos.setY(i, h > 0 ? h : 0);
+  }
+  geo.computeVertexNormals();
+  const mat = new THREE.MeshLambertMaterial({
+    color: 0xe8f4fc,
+    emissive: 0xaad0e8,
+    emissiveIntensity: 0.06,
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.rotation.x = -Math.PI / 2;
+  mesh.position.y = -1;
+  mesh.receiveShadow = true;
+  scene.add(mesh);
+
+  // ice plane beneath
+  const icePlane = new THREE.Mesh(
+    new THREE.PlaneGeometry(600, 200),
+    new THREE.MeshLambertMaterial({ color: 0xbcd8f0, transparent: true, opacity: 0.6 })
+  );
+  icePlane.rotation.x = -Math.PI / 2;
+  icePlane.position.y = -1.1;
+  scene.add(icePlane);
+}
+makeTerrain();
+
+// ─── TRAIN TRACKS ───
+function makeTracks() {
+  const railMat = new THREE.MeshLambertMaterial({ color: 0x8899aa });
+  const tieMat = new THREE.MeshLambertMaterial({ color: 0x5a4a3a });
+
+  // Rails
+  for (const xOff of [-1.2, 1.2]) {
+    const rGeo = new THREE.BoxGeometry(600, 0.12, 0.18);
+    const rail = new THREE.Mesh(rGeo, railMat);
+    rail.position.set(xOff, -0.5, 0);
+    rail.receiveShadow = true;
+    scene.add(rail);
+  }
+
+  // Ties
+  for (let z = -300; z < 300; z += 2.5) {
+    const tGeo = new THREE.BoxGeometry(3.2, 0.15, 0.5);
+    const tie = new THREE.Mesh(tGeo, tieMat);
+    tie.position.set(0, -0.52, z);
+    tie.receiveShadow = true;
+    scene.add(tie);
+  }
+}
+makeTracks();
+
+// ─── MOUNTAINS ───
+function makeMountains() {
+  const snowMat = new THREE.MeshLambertMaterial({ color: 0xddeef8, emissive: 0x99cce0, emissiveIntensity: 0.05 });
+  const rockMat = new THREE.MeshLambertMaterial({ color: 0x8898a8 });
+
+  for (let i = 0; i < 60; i++) {
+    const h = 20 + Math.random() * 60;
+    const r = 8 + Math.random() * 20;
+    const geo = new THREE.ConeGeometry(r, h, 5 + Math.floor(Math.random() * 4), 1);
+    const rock = new THREE.Mesh(geo, rockMat);
+    const side = Math.random() > 0.5 ? 1 : -1;
+    const xPos = side * (30 + Math.random() * 80);
+    rock.position.set(xPos, h / 2 - 1, (Math.random() - 0.5) * 500);
+    rock.rotation.y = Math.random() * Math.PI;
+    rock.castShadow = true;
+    scene.add(rock);
+
+    // Snow cap
+    const capH = h * 0.35;
+    const capGeo = new THREE.ConeGeometry(r * 0.5, capH, 5, 1);
+    const cap = new THREE.Mesh(capGeo, snowMat);
+    cap.position.set(xPos, h - capH / 2 - 1, rock.position.z);
+    cap.rotation.y = rock.rotation.y;
+    scene.add(cap);
+  }
+}
+makeMountains();
+
+// ─── FROZEN TREES ───
+function makeTrees() {
+  const trunkMat = new THREE.MeshLambertMaterial({ color: 0x5a4a3a });
+  const leafMat  = new THREE.MeshLambertMaterial({ color: 0xd0eaf5, transparent: true, opacity: 0.85 });
+
+  for (let i = 0; i < 180; i++) {
+    const h = 3 + Math.random() * 7;
+    const side = Math.random() > 0.5 ? 1 : -1;
+    const x = side * (8 + Math.random() * 50);
+    const z = (Math.random() - 0.5) * 500;
+
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.25, h * 0.4, 6), trunkMat);
+    trunk.position.set(x, h * 0.2 - 1, z);
+    trunk.castShadow = true;
+    scene.add(trunk);
+
+    // Layered cones
+    for (let t = 0; t < 3; t++) {
+      const lH = h * (0.5 - t * 0.08);
+      const lR = lH * 0.5;
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(lR, lH, 6), leafMat);
+      cone.position.set(x, h * 0.4 + t * h * 0.22 - 1, z);
+      cone.castShadow = true;
+      scene.add(cone);
+    }
+  }
+}
+makeTrees();
+
+// ─── ABANDONED BUILDINGS ───
+function makeRuins() {
+  const wallMat = new THREE.MeshLambertMaterial({ color: 0x8a9aaa });
+  const snowCap = new THREE.MeshLambertMaterial({ color: 0xe5f3fb });
+  const glassMat= new THREE.MeshLambertMaterial({ color: 0x99ccdd, transparent: true, opacity: 0.3 });
+
+  const positions = [-220, -80, 40, 170, 310];
+  for (const z of positions) {
+    const side = Math.random() > 0.5 ? 1 : -1;
+    const bx = side * (40 + Math.random() * 30);
+
+    // Main building block
+    const bh = 8 + Math.random() * 14;
+    const bw = 8 + Math.random() * 12;
+    const bd = 8 + Math.random() * 12;
+    const bGeo = new THREE.BoxGeometry(bw, bh, bd);
+    const b = new THREE.Mesh(bGeo, wallMat);
+    b.position.set(bx, bh / 2 - 1, z);
+    b.castShadow = true; b.receiveShadow = true;
+    scene.add(b);
+
+    // Snow on roof
+    const snowGeo = new THREE.BoxGeometry(bw + 0.5, 0.6, bd + 0.5);
+    const snow = new THREE.Mesh(snowGeo, snowCap);
+    snow.position.set(bx, bh - 0.7, z);
+    scene.add(snow);
+
+    // Windows
+    for (let wy = 2; wy < bh; wy += 3) {
+      const wGeo = new THREE.BoxGeometry(1.5, 1.5, 0.1);
+      const win = new THREE.Mesh(wGeo, glassMat);
+      win.position.set(bx + bw / 2 + 0.05, wy, z);
+      scene.add(win);
+    }
+
+    // Smaller adjacent building
+    const b2h = 4 + Math.random() * 6;
+    const b2 = new THREE.Mesh(new THREE.BoxGeometry(5, b2h, 5), wallMat);
+    b2.position.set(bx + (Math.random() - 0.5) * (bw + 5), b2h / 2 - 1, z + (Math.random() - 0.5) * 12);
+    b2.castShadow = true;
+    scene.add(b2);
+  }
+}
+makeRuins();
+
+// ─── THE TRAIN ───
+const trainGroup = new THREE.Group();
+scene.add(trainGroup);
+
+function buildTrain() {
+  const bodyMat  = new THREE.MeshLambertMaterial({ color: 0x2a3d52 });
+  const roofMat  = new THREE.MeshLambertMaterial({ color: 0x1e2e3e });
+  const windowMat= new THREE.MeshLambertMaterial({ color: 0xffdd99, transparent: true, opacity: 0.85, emissive: 0xffcc66, emissiveIntensity: 0.4 });
+  const wheelMat = new THREE.MeshLambertMaterial({ color: 0x334455 });
+  const engineMat= new THREE.MeshLambertMaterial({ color: 0x1a2a3a });
+  const accentMat= new THREE.MeshLambertMaterial({ color: 0x7ab8d8 });
+
+  // Wagons
+  const wagons = [
+    { z: 0,   w: 18, h: 4.5, label: 'Engine' },
+    { z: 20,  w: 14, h: 4,   label: 'Passengers' },
+    { z: 36,  w: 14, h: 4,   label: 'Dining' },
+    { z: 52,  w: 14, h: 4.5, label: 'Research' },
+    { z: 68,  w: 14, h: 3.5, label: 'Storage' },
+    { z: 83,  w: 14, h: 4,   label: 'Greenhouse' },
+    { z: 98,  w: 10, h: 4,   label: 'Medical' },
+  ];
+
+  for (const w of wagons) {
+    // Body
+    const body = new THREE.Mesh(new THREE.BoxGeometry(4.5, w.h, w.w), bodyMat);
+    body.position.set(0, w.h / 2 + 0.4, -w.z - w.w / 2);
+    body.castShadow = true;
+    trainGroup.add(body);
+
+    // Roof
+    const roofGeo = new THREE.BoxGeometry(4.7, 0.3, w.w + 0.4);
+    const roof = new THREE.Mesh(roofGeo, roofMat);
+    roof.position.set(0, w.h + 0.6, -w.z - w.w / 2);
+    trainGroup.add(roof);
+
+    // Accent stripe
+    const accent = new THREE.Mesh(new THREE.BoxGeometry(4.55, 0.15, w.w), accentMat);
+    accent.position.set(0, w.h * 0.55 + 0.4, -w.z - w.w / 2);
+    trainGroup.add(accent);
+
+    // Windows
+    const winCount = Math.floor(w.w / 3.5);
+    for (let wi = 0; wi < winCount; wi++) {
+      for (const xSign of [-1, 1]) {
+        const win = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.4, 1.8), windowMat);
+        win.position.set(xSign * 2.27, w.h * 0.6, -w.z - 2 - wi * 3.2);
+        trainGroup.add(win);
+      }
+    }
+
+    // Wheels
+    for (let wz = -w.z - 2; wz > -w.z - w.w + 2; wz -= 4) {
+      for (const xSign of [-1, 1]) {
+        const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 0.3, 12), wheelMat);
+        wheel.rotation.z = Math.PI / 2;
+        wheel.position.set(xSign * 2.4, 0.25, wz);
+        trainGroup.add(wheel);
+      }
+    }
+
+    // Connector
+    const conn = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 2), wheelMat);
+    conn.position.set(0, 0.4, -w.z - w.w + 1);
+    trainGroup.add(conn);
+  }
+
+  // Engine chimney / exhaust
+  const chimney = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.5, 3, 8), engineMat);
+  chimney.position.set(-1.2, 6, -5);
+  trainGroup.add(chimney);
+
+  const chimneyTop = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.4, 0.5, 8), engineMat);
+  chimneyTop.position.set(-1.2, 7.8, -5);
+  trainGroup.add(chimneyTop);
+
+  // Front nose shape
+  const noseGeo = new THREE.BoxGeometry(4.5, 4.5, 4);
+  const nose = new THREE.Mesh(noseGeo, engineMat);
+  nose.position.set(0, 2.7, 1.5);
+  trainGroup.add(nose);
+
+  // Headlight
+  const headlight = new THREE.PointLight(0xffeedd, 3, 25);
+  headlight.position.set(0, 3, 4);
+  trainGroup.add(headlight);
+
+  // Front light glow
+  const glowMat = new THREE.MeshBasicMaterial({ color: 0xffeecc, transparent: true, opacity: 0.9 });
+  const glow = new THREE.Mesh(new THREE.SphereGeometry(0.5, 8, 8), glowMat);
+  glow.position.set(0, 3, 3.8);
+  trainGroup.add(glow);
+}
+buildTrain();
+
+// ─── STEAM PARTICLES ───
+const steamParticles = [];
+function createSteam() {
+  const geo = new THREE.BufferGeometry();
+  const N = 120;
+  const pos = new Float32Array(N * 3);
+  const vel = [];
+  for (let i = 0; i < N; i++) {
+    pos[i*3]   = -1.2 + (Math.random()-0.5)*0.6;
+    pos[i*3+1] = 8 + Math.random() * 4;
+    pos[i*3+2] = -5 + (Math.random()-0.5)*0.6;
+    vel.push({ x: (Math.random()-0.5)*0.06, y: 0.06+Math.random()*0.08, z: (Math.random()-0.5)*0.06, life: Math.random() });
+  }
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const mat = new THREE.PointsMaterial({ color: 0xddeef8, size: 0.6, transparent: true, opacity: 0.35 });
+  const pts = new THREE.Points(geo, mat);
+  trainGroup.add(pts);
+  steamParticles.push({ pts, vel, pos });
+}
+createSteam();
+
+function updateSteam() {
+  for (const s of steamParticles) {
+    const p = s.pts.geometry.attributes.position;
+    for (let i = 0; i < s.vel.length; i++) {
+      s.vel[i].life += 0.008;
+      p.setX(i, p.getX(i) + s.vel[i].x);
+      p.setY(i, p.getY(i) + s.vel[i].y);
+      p.setZ(i, p.getZ(i) + s.vel[i].z);
+      if (s.vel[i].life > 1) {
+        p.setX(i, -1.2 + (Math.random()-0.5)*0.6);
+        p.setY(i, 8);
+        p.setZ(i, -5 + (Math.random()-0.5)*0.6);
+        s.vel[i].life = 0;
+      }
+    }
+    p.needsUpdate = true;
+  }
+}
+
+// ─── SNOW PARTICLES (Three.js world) ───
+let snowSystem;
+function createSnow() {
+  const N = 3000;
+  const geo = new THREE.BufferGeometry();
+  const pos = new Float32Array(N * 3);
+  const vel = [];
+  for (let i = 0; i < N; i++) {
+    pos[i*3]   = (Math.random()-0.5) * 100;
+    pos[i*3+1] = Math.random() * 40;
+    pos[i*3+2] = (Math.random()-0.5) * 100;
+    vel.push({ x: (Math.random()-0.5)*0.02, y: -0.05-Math.random()*0.08, z: 0.05+Math.random()*0.06 });
+  }
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const mat = new THREE.PointsMaterial({
+    color: 0xe8f6ff, size: 0.25, transparent: true, opacity: 0.7,
+    sizeAttenuation: true,
+  });
+  snowSystem = new THREE.Points(geo, mat);
+  scene.add(snowSystem);
+}
+createSnow();
+
+function updateSnow(dt) {
+  const p = snowSystem.geometry.attributes.position;
+  const intensity = G.weather.intensity;
+  for (let i = 0; i < p.count; i++) {
+    let x = p.getX(i) + (Math.random()-0.5)*0.04*intensity;
+    let y = p.getY(i) - (0.05+Math.random()*0.06)*intensity;
+    let z = p.getZ(i) + 0.06*intensity;
+    if (y < -1) { y = 38; x = (Math.random()-0.5)*100; z = (Math.random()-0.5)*100; }
+    if (x < -50) x = 50; if (x > 50) x = -50;
+    if (z > 50) z = -50;
+    p.setXYZ(i, x, y, z);
+  }
+  p.needsUpdate = true;
+}
+
+// ─── CLOUDS ───
+function makeClouds() {
+  const cloudMat = new THREE.MeshLambertMaterial({ color: 0xddeef8, transparent: true, opacity: 0.7 });
+  for (let i = 0; i < 25; i++) {
+    const g = new THREE.Group();
+    const puffs = 3 + Math.floor(Math.random()*5);
+    for (let p = 0; p < puffs; p++) {
+      const r = 3 + Math.random()*5;
+      const puff = new THREE.Mesh(new THREE.SphereGeometry(r, 6, 6), cloudMat);
+      puff.position.set((Math.random()-0.5)*8, (Math.random()-0.5)*2, (Math.random()-0.5)*6);
+      g.add(puff);
+    }
+    g.position.set((Math.random()-0.5)*300, 30+Math.random()*25, (Math.random()-0.5)*300);
+    g.userData.speed = 0.01 + Math.random()*0.02;
+    scene.add(g);
+  }
+}
+makeClouds();
+
+// ─── AURORA MESH ───
+function makeAurora() {
+  const auroraGeo = new THREE.PlaneGeometry(400, 60, 40, 10);
+  const auroraMat = new THREE.ShaderMaterial({
+    uniforms: { time: { value: 0 } },
+    vertexShader: `
+      uniform float time;
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        vec3 pos = position;
+        pos.y += sin(pos.x * 0.03 + time * 0.8) * 5.0
+               + cos(pos.x * 0.05 + time * 0.5) * 3.0;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+      }
+    `,
+    fragmentShader: `
+      varying vec2 vUv;
+      void main() {
+        float alpha = sin(vUv.x * 3.14159) * (1.0 - vUv.y) * 0.25;
+        vec3 col = mix(vec3(0.0, 1.0, 0.7), vec3(0.5, 0.9, 1.0), vUv.x);
+        gl_FragColor = vec4(col, alpha);
+      }
+    `,
+    transparent: true, side: THREE.DoubleSide, depthWrite: false,
+  });
+  const aurora = new THREE.Mesh(auroraGeo, auroraMat);
+  aurora.position.set(0, 70, -200);
+  aurora.rotation.x = -0.3;
+  aurora.userData.isMat = auroraMat;
+  scene.add(aurora);
+  return aurora;
+}
+const auroraObj = makeAurora();
+
+// ═══════════════════════════════════════════════
+//  2D SNOW CANVAS OVERLAY
+// ═══════════════════════════════════════════════
+const snowCanvas = document.getElementById('snow-canvas');
+const snowCtx = snowCanvas.getContext('2d');
+let snowFlakes2D = [];
+
+function resizeSnowCanvas() {
+  snowCanvas.width = window.innerWidth;
+  snowCanvas.height = window.innerHeight;
+}
+resizeSnowCanvas();
+window.addEventListener('resize', resizeSnowCanvas);
+
+for (let i = 0; i < 200; i++) {
+  snowFlakes2D.push({
+    x: Math.random() * window.innerWidth,
+    y: Math.random() * window.innerHeight,
+    r: 0.5 + Math.random() * 2,
+    speed: 0.5 + Math.random() * 1.5,
+    wind: (Math.random()-0.5) * 0.5,
+    opacity: 0.3 + Math.random() * 0.5,
+  });
+}
+
+function drawSnow2D() {
+  snowCtx.clearRect(0, 0, snowCanvas.width, snowCanvas.height);
+  const intensity = G.weather.intensity;
+  for (const f of snowFlakes2D) {
+    snowCtx.beginPath();
+    snowCtx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+    snowCtx.fillStyle = `rgba(220,240,255,${f.opacity * intensity})`;
+    snowCtx.fill();
+    f.y += f.speed * intensity;
+    f.x += f.wind * intensity;
+    if (f.y > snowCanvas.height) { f.y = -5; f.x = Math.random() * snowCanvas.width; }
+    if (f.x > snowCanvas.width)  { f.x = 0; }
+    if (f.x < 0)                 { f.x = snowCanvas.width; }
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  MINIMAP
+// ═══════════════════════════════════════════════
+const mmCanvas = document.getElementById('minimap-canvas');
+const mmCtx = mmCanvas.getContext('2d');
+mmCanvas.width = 160; mmCanvas.height = 100;
+
+function drawMinimap() {
+  mmCtx.fillStyle = '#050f1e';
+  mmCtx.fillRect(0, 0, 160, 100);
+
+  // Track line
+  mmCtx.strokeStyle = '#3a6a8a';
+  mmCtx.lineWidth = 2;
+  mmCtx.beginPath();
+  mmCtx.moveTo(20, 50); mmCtx.lineTo(140, 50);
+  mmCtx.stroke();
+
+  // Region markers
+  const regions = [30, 55, 80, 105, 130];
+  for (const rx of regions) {
+    mmCtx.fillStyle = 'rgba(127,255,212,0.2)';
+    mmCtx.beginPath();
+    mmCtx.arc(rx, 50, 3, 0, Math.PI*2);
+    mmCtx.fill();
+  }
+
+  // Train position
+  const tx = 20 + (G.distanceTraveled % 5000) / 5000 * 120;
+  mmCtx.fillStyle = '#7fffd4';
+  mmCtx.beginPath();
+  mmCtx.arc(Math.min(tx, 140), 50, 5, 0, Math.PI*2);
+  mmCtx.fill();
+
+  // Mountains silhouette
+  mmCtx.fillStyle = 'rgba(100,150,180,0.25)';
+  mmCtx.beginPath();
+  mmCtx.moveTo(0, 100);
+  const mPts = [0,30, 15,20, 30,28, 45,15, 60,25, 75,10, 90,22, 105,18, 120,28, 135,20, 150,28, 160,30, 160,100];
+  for (let i = 0; i < mPts.length; i += 2) mmCtx.lineTo(mPts[i], mPts[i+1]);
+  mmCtx.closePath(); mmCtx.fill();
+}
+
+// ═══════════════════════════════════════════════
+//  GAME DATA
+// ═══════════════════════════════════════════════
+const TRAIN_SECTIONS = [
+  { id:'engine',    icon:'🔧', name:'Engine Room',     desc:'The beating heart. Monitors fuel consumption and drive systems.', status:'ok' },
+  { id:'passenger', icon:'🛋', name:'Passenger Cabins', desc:'847 souls find warmth here. Morale and health maintained.', status:'ok' },
+  { id:'greenhouse',icon:'🌿', name:'Greenhouse Wagon', desc:'Hydroponic crops grow under UV lamps. Primary food source.', status:'warning' },
+  { id:'dining',    icon:'🍲', name:'Dining Hall',      desc:'Serves three meals daily. Crucial for morale and community.', status:'ok' },
+  { id:'medical',   icon:'💉', name:'Medical Bay',      desc:'Treats illness and injuries. Current capacity: 36 patients.', status:'warning' },
+  { id:'storage',   icon:'📦', name:'Storage Wagons',   desc:'Holds supplies, fuel reserves, and salvaged equipment.', status:'ok' },
+  { id:'research',  icon:'🔬', name:'Research Lab',     desc:'Scientists work on survival technology. Upgrade source.', status:'ok' },
+  { id:'observation',icon:'🌌',name:'Observation Deck', desc:'Panoramic views of the frozen world. Boosts morale greatly.', status:'ok' },
+  { id:'generator', icon:'⚡', name:'Power Generator',  desc:'Converts fuel to electricity for heat, light, and systems.', status:'ok' },
+];
+
+const NPCS = [
+  { name:'Dr. Elara Voss',   role:'Chief Medical',  avatar:'👩‍⚕️', mood:'Worried', moodVal:45 },
+  { name:'Marco Chen',       role:'Engineer',       avatar:'👨‍🔧', mood:'Focused', moodVal:72 },
+  { name:'Sofia Andersen',   role:'Botanist',       avatar:'👩‍🌾', mood:'Hopeful', moodVal:81 },
+  { name:'James Okafor',     role:'Security Chief', avatar:'👮', mood:'Alert',   moodVal:68 },
+  { name:'Yuki Tanaka',      role:'Pilot/Navigator',avatar:'🧑‍✈️', mood:'Calm',   moodVal:76 },
+  { name:'Priya Mehta',      role:'Scientist',      avatar:'👩‍🔬', mood:'Excited',moodVal:88 },
+  { name:'Dmitri Volkov',    role:'Head Engineer',  avatar:'👨‍🏭', mood:'Tired',  moodVal:55 },
+  { name:'Amara Diallo',     role:'Counselor',      avatar:'🧕', mood:'Caring',  moodVal:79 },
+  { name:'Lucas Ferreira',   role:'Chef',           avatar:'👨‍🍳', mood:'Content',moodVal:83 },
+  { name:'Nadia Kowalski',   role:'Researcher',     avatar:'👩‍💻', mood:'Curious',moodVal:90 },
+  { name:'Erik Larsson',     role:'Mechanic',       avatar:'🧑‍🔧', mood:'Stoic',  moodVal:64 },
+  { name:'Fatima Al-Hassan', role:'Teacher',        avatar:'👩‍🏫', mood:'Hopeful',moodVal:77 },
+];
+
+const EXPLORE_SITES = [
+  { id:'s1', icon:'🏙', name:'Frozen City Remnants',   desc:'A once-great city, silent under meters of ice and snow.',       dist:'12 km', reward:'+Fuel +Medicine', rewards:{fuel:8,medicine:6}, time:4000 },
+  { id:'s2', icon:'🔭', name:'Arctic Research Station', desc:'A scientific outpost may hold vital data and supplies.',        dist:'8 km',  reward:'+Research Data +Medicine', rewards:{medicine:10}, time:3000 },
+  { id:'s3', icon:'🏗', name:'Industrial Depot',        desc:'Old infrastructure. Could yield fuel and metal parts.',         dist:'20 km', reward:'+Fuel +Parts', rewards:{fuel:15}, time:5000 },
+  { id:'s4', icon:'🚉', name:'Abandoned Rail Station',  desc:'Another train stopped here long ago. Salvage the remains.',    dist:'5 km',  reward:'+Fuel +Survivors', rewards:{fuel:5}, time:2000 },
+  { id:'s5', icon:'🏔', name:'Glacier Cave System',     desc:'Ice caves hide preserved pre-freeze technology.',               dist:'28 km', reward:'+Research +Lore', rewards:{}, time:6000 },
+  { id:'s6', icon:'🌾', name:'Frozen Greenhouse Dome',  desc:'A biodome sealed before the freeze. Food stores inside.',       dist:'15 km', reward:'+Food ×2', rewards:{food:20}, time:4500 },
+];
+
+const UPGRADES_LIST = [
+  { id:'u1', name:'Thermal Hull Plating',    desc:'Reduces heat loss by 30%, lowering fuel consumption.',         cost:'48 Research', effect:{ heat:+8 } },
+  { id:'u2', name:'Hydroponic Expansion',    desc:'Double greenhouse capacity. +40% food production.',            cost:'60 Research', effect:{ food:+12 } },
+  { id:'u3', name:'Solar Collectors',        desc:'Harness what little sun reaches the surface. +20% power.',     cost:'45 Research', effect:{ power:+10 } },
+  { id:'u4', name:'Advanced Filtration',     desc:'Purify contaminated ice for drinking water and medicine.',      cost:'35 Research', effect:{ medicine:+8 } },
+  { id:'u5', name:'Observation Deck Upgrade',desc:'Improved panoramic views boost morale significantly.',          cost:'25 Research', effect:{ morale:+15 } },
+  { id:'u6', name:'Engine Overclock',        desc:'Boost train speed by 20%. Higher fuel cost.',                   cost:'55 Research', effect:{ speed:+20 } },
+  { id:'u7', name:'Community Center',        desc:'A dedicated social space improves happiness and cooperation.',  cost:'30 Research', effect:{ morale:+10 } },
+  { id:'u8', name:'Nano-Repair Drones',      desc:'Automated repair units maintain train integrity.',              cost:'70 Research', effect:{} },
+];
+
+const STORY_EVENTS = [
+  {
+    icon:'⚡', title:'Power Surge',
+    text:'An unexpected electrical surge has damaged the generator. Engineer Dmitri warns it will fail within hours without intervention.',
+    choices:[
+      { text:'Divert food power to repairs', effect:'−10% food, +power', apply:(g)=>{ g.resources.food-=10; g.resources.power+=15; } },
+      { text:'Reduce train speed to lower draw', effect:'−15 km/h speed, +power', apply:(g)=>{ g.speed-=15; g.resources.power+=10; } },
+      { text:'Use emergency fuel reserves', effect:'−15% fuel, +power restored', apply:(g)=>{ g.resources.fuel-=15; g.resources.power+=20; } },
+    ]
+  },
+  {
+    icon:'❄️', title:'The Endless Blizzard',
+    text:'A massive blizzard engulfs the train. Visibility zero. The tracks ahead are unknown. Yuki asks for your orders.',
+    choices:[
+      { text:'Push through at full speed', effect:'−20% fuel, reach safety', apply:(g)=>{ g.resources.fuel-=20; g.resources.morale+=5; } },
+      { text:'Slow to a crawl, conserve heat', effect:'−10% heat efficiency, safer', apply:(g)=>{ g.resources.heat-=10; } },
+      { text:'Stop and shelter in place', effect:'−15% morale, preserves fuel', apply:(g)=>{ g.resources.morale-=15; } },
+    ]
+  },
+  {
+    icon:'🆘', title:'Survivors Spotted',
+    text:'Thermal sensors detect 23 survivors at an abandoned station. They are alive but frostbitten and starving.',
+    choices:[
+      { text:'Take them all aboard', effect:'−20% food, +23 passengers, +morale', apply:(g)=>{ g.resources.food-=20; g.passengers.total+=23; g.resources.morale+=12; } },
+      { text:'Send food and move on', effect:'−10% food', apply:(g)=>{ g.resources.food-=10; g.resources.morale+=5; } },
+      { text:'You cannot risk the others', effect:'−25% morale', apply:(g)=>{ g.resources.morale-=25; } },
+    ]
+  },
+  {
+    icon:'🌿', title:'Greenhouse Crisis',
+    text:'A fungal outbreak is spreading through the hydroponic bays. Sofia estimates 40% of crops will be lost without action.',
+    choices:[
+      { text:'Burn the infected section', effect:'−25% food, stop spread', apply:(g)=>{ g.resources.food-=25; g.resources.morale-=5; } },
+      { text:'Use medicine as fungicide', effect:'−15% medicine, save most crops', apply:(g)=>{ g.resources.medicine-=15; } },
+      { text:'Quarantine and monitor', effect:'Risk spread, save medicine', apply:(g)=>{ g.resources.food-=8; } },
+    ]
+  },
+  {
+    icon:'🔬', title:'Discovery: Signal Source',
+    text:'Priya has detected a repeating signal from coordinates 340 km east. It matches pre-collapse habitation beacons.',
+    choices:[
+      { text:'Alter course immediately', effect:'Extra fuel, but closer to hope', apply:(g)=>{ g.resources.fuel-=12; g.resources.morale+=20; } },
+      { text:'Send a drone scout first', effect:'Costs time, safer', apply:(g)=>{ g.resources.morale+=8; } },
+      { text:'Log it and continue route', effect:'Safer route, lower morale', apply:(g)=>{ g.resources.morale-=5; } },
+    ]
+  },
+];
+
+// ═══════════════════════════════════════════════
+//  UI FUNCTIONS
+// ═══════════════════════════════════════════════
+window.openTrainModal = function() {
+  buildTrainSectionsUI();
+  buildNPCGrid();
+  buildUpgradesUI();
+  document.getElementById('train-modal').classList.add('open');
+};
+window.openExploreModal = function() {
+  buildExploreUI();
+  document.getElementById('explore-modal').classList.add('open');
+};
+window.openCrewTab = function() {
+  openTrainModal();
+  setTimeout(() => switchTab('train','crew'), 100);
+};
+window.openResearchTab = function() {
+  openTrainModal();
+  setTimeout(() => switchTab('train','upgrades'), 100);
+};
+window.closeModal = function(id) {
+  document.getElementById(id).classList.remove('open');
+};
+
+window.switchTab = function(modal, tab) {
+  const panes = document.querySelectorAll(`#${modal}-modal .tab-pane`);
+  const btns  = document.querySelectorAll(`#${modal}-modal .tab-btn`);
+  panes.forEach(p => p.classList.remove('active'));
+  btns.forEach(b  => b.classList.remove('active'));
+  const target = document.getElementById(`${modal}-tab-${tab}`);
+  if (target) target.classList.add('active');
+  btns.forEach(b => { if (b.textContent.toLowerCase().includes(tab.substring(0,3))) b.classList.add('active'); });
+};
+
+function buildTrainSectionsUI() {
+  const grid = document.getElementById('train-sections-grid');
+  grid.innerHTML = TRAIN_SECTIONS.map(s => `
+    <div class="section-card">
+      <div class="section-icon">${s.icon}</div>
+      <div class="section-name">${s.name}</div>
+      <div class="section-desc">${s.desc}</div>
+      <div class="section-status ${s.status}">${s.status === 'ok' ? '● Operational' : s.status === 'warning' ? '● Needs Attention' : '● Damaged'}</div>
+    </div>
+  `).join('');
+}
+
+function buildNPCGrid() {
+  const grid = document.getElementById('npc-grid');
+  grid.innerHTML = NPCS.map(n => `
+    <div class="npc-card">
+      <div class="npc-avatar">${n.avatar}</div>
+      <div class="npc-name">${n.name}</div>
+      <div class="npc-role">${n.role}</div>
+      <div class="npc-mood">${getMoodEmoji(n.moodVal)} ${n.mood}</div>
+    </div>
+  `).join('');
+}
+
+function getMoodEmoji(v) {
+  if (v >= 80) return '😊';
+  if (v >= 60) return '😐';
+  if (v >= 40) return '😟';
+  return '😰';
+}
+
+function buildUpgradesUI() {
+  const grid = document.getElementById('upgrade-grid');
+  grid.innerHTML = UPGRADES_LIST.map(u => `
+    <div class="upgrade-card ${G.upgrades[u.id] ? 'bought' : ''}" onclick="buyUpgrade('${u.id}')">
+      <div class="upgrade-name">${G.upgrades[u.id] ? '✓ ' : ''}${u.name}</div>
+      <div class="upgrade-desc">${u.desc}</div>
+      <div class="upgrade-cost">Cost: ${u.cost}</div>
+    </div>
+  `).join('');
+}
+
+window.buyUpgrade = function(id) {
+  if (G.upgrades[id]) return;
+  const u = UPGRADES_LIST.find(x => x.id === id);
+  if (!u) return;
+  G.upgrades[id] = true;
+  for (const [k,v] of Object.entries(u.effect)) {
+    if (G.resources[k] !== undefined) G.resources[k] = Math.min(100, G.resources[k] + v);
+    if (k === 'speed') G.speed += v;
+  }
+  showNotif(`Upgrade Complete: ${u.name}`, 'good');
+  buildUpgradesUI();
+  updateHUD();
+};
+
+function buildExploreUI() {
+  const grid = document.getElementById('explore-grid');
+  grid.innerHTML = EXPLORE_SITES.map(s => `
+    <div class="explore-site ${G.exploredSites[s.id] ? 'explored' : ''}" onclick="startExpedition('${s.id}')">
+      <div class="explore-distance">${s.dist}</div>
+      <div class="explore-icon">${s.icon}</div>
+      <div class="explore-name">${s.name}</div>
+      <div class="explore-desc">${s.desc}</div>
+      <div class="explore-reward">${G.exploredSites[s.id] ? '✓ Explored' : '→ ' + s.reward}</div>
+    </div>
+  `).join('');
+}
+
+window.startExpedition = function(id) {
+  const site = EXPLORE_SITES.find(s => s.id === id);
+  if (!site || G.exploredSites[id]) return;
+  closeModal('explore-modal');
+  showNotif(`Expedition launched: ${site.name}`, 'good');
+  setTimeout(() => {
+    G.exploredSites[id] = true;
+    for (const [k,v] of Object.entries(site.rewards)) {
+      if (G.resources[k] !== undefined) G.resources[k] = Math.min(100, G.resources[k] + v);
+    }
+    showNotif(`Expedition returned! ${site.reward}`, 'good');
+    updateHUD();
+  }, site.time);
+};
+
+// Notifications
+const notifQueue = [];
+function showNotif(msg, type = '') {
+  const container = document.getElementById('notifications');
+  const el = document.createElement('div');
+  el.className = `notif ${type}`;
+  el.textContent = msg;
+  container.appendChild(el);
+  setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 4200);
+}
+
+// Story events
+let storyShown = false;
+let storyIdx = 0;
+
+function triggerStoryEvent() {
+  if (storyShown) return;
+  storyShown = true;
+  const ev = STORY_EVENTS[storyIdx % STORY_EVENTS.length];
+  storyIdx++;
+
+  document.getElementById('story-icon').textContent  = ev.icon;
+  document.getElementById('story-title').textContent = ev.title;
+  document.getElementById('story-text').textContent  = ev.text;
+
+  const choicesEl = document.getElementById('story-choices');
+  choicesEl.innerHTML = ev.choices.map((c, i) => `
+    <button class="story-choice" onclick="resolveStory(${storyIdx-1}, ${i})">
+      ${c.text}
+      <div class="story-choice-effect">${c.effect}</div>
+    </button>
+  `).join('');
+
+  document.getElementById('story-overlay').classList.add('open');
+}
+
+window.resolveStory = function(evIdx, choiceIdx) {
+  const ev = STORY_EVENTS[evIdx % STORY_EVENTS.length];
+  ev.choices[choiceIdx].apply(G);
+  clampResources();
+  document.getElementById('story-overlay').classList.remove('open');
+  storyShown = false;
+  updateHUD();
+  showNotif(`Decision made: ${ev.choices[choiceIdx].text.split(',')[0]}`, 'good');
+};
+
+function clampResources() {
+  for (const k of Object.keys(G.resources)) {
+    G.resources[k] = Math.max(0, Math.min(100, G.resources[k]));
+  }
+}
+
+// ─── HUD UPDATE ───
+function formatTime(mins) {
+  const h = Math.floor(mins / 60) % 24;
+  const m = Math.floor(mins % 60);
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+}
+
+function updateHUD() {
+  document.getElementById('hud-time').textContent = formatTime(G.time);
+  document.getElementById('hud-day').textContent  = `Day ${G.day} · ${G.regions[G.regionIdx % G.regions.length]}`;
+  document.getElementById('hud-speed').textContent = `${Math.round(G.speed)} km/h`;
+
+  for (const [k,v] of Object.entries(G.resources)) {
+    const bar = document.getElementById(`bar-${k}`);
+    const val = document.getElementById(`val-${k}`);
+    if (!bar || !val) continue;
+    const pct = Math.max(0, Math.min(100, Math.round(v)));
+    bar.style.width = pct + '%';
+    val.textContent = pct + '%';
+    if (pct < 25) { bar.classList.add('low'); if (pct < 15) showNotif(`⚠ ${k.toUpperCase()} CRITICAL: ${pct}%`, 'danger'); }
+    else bar.classList.remove('low');
+  }
+
+  const wt = WEATHER_TYPES.find(w => w.type === G.weather.type) || WEATHER_TYPES[1];
+  document.getElementById('wt-icon').textContent = wt.icon;
+  document.getElementById('wt-desc').textContent = wt.desc;
+  document.getElementById('wt-temp').textContent = `${G.weather.temp}°C`;
+
+  document.getElementById('ps-total').textContent   = G.passengers.total;
+  document.getElementById('ps-healthy').textContent = G.passengers.total - G.passengers.sick;
+  document.getElementById('ps-sick').textContent    = G.passengers.sick;
+  document.getElementById('ps-working').textContent = G.passengers.working;
+  document.getElementById('ps-resting').textContent = G.passengers.total - G.passengers.working;
+  document.getElementById('ps-dist').textContent    = Math.round(G.distanceTraveled).toLocaleString() + ' km';
+  document.getElementById('ps-region').textContent  = G.regions[G.regionIdx % G.regions.length];
+}
+
+// ─── PAUSE / CAMERA ───
+window.togglePause = function() {
+  G.paused = !G.paused;
+  document.getElementById('pause-icon').textContent = G.paused ? '▶' : '⏸';
+  document.getElementById('pause-lbl').textContent  = G.paused ? 'Resume' : 'Pause';
+  showNotif(G.paused ? 'Game Paused' : 'Game Resumed');
+};
+
+window.toggleCamera = function() {
+  G.cameraMode = (G.cameraMode + 1) % 4;
+  const modes = ['Side View','Chase Cam','Cinematic','Aerial'];
+  showNotif(`Camera: ${modes[G.cameraMode]}`);
+};
+
+// ═══════════════════════════════════════════════
+//  CAMERA ANIMATION
+// ═══════════════════════════════════════════════
+let cameraAngle = 0;
+let cinematicT  = 0;
+
+function updateCamera(t) {
+  switch (G.cameraMode) {
+    case 0: // Side view
+      camera.position.set(
+        Math.sin(cameraAngle) * 38,
+        10 + Math.sin(t * 0.3) * 2,
+        -50 + Math.cos(cameraAngle) * 5
+      );
+      camera.lookAt(0, 4, -50);
+      break;
+    case 1: // Chase cam
+      camera.position.set(0, 14, 30);
+      camera.lookAt(0, 4, -10);
+      break;
+    case 2: // Cinematic orbit
+      cinematicT += 0.003;
+      camera.position.set(
+        Math.sin(cinematicT) * 55,
+        18 + Math.sin(cinematicT * 0.7) * 8,
+        -50 + Math.cos(cinematicT) * 40
+      );
+      camera.lookAt(0, 4, -50);
+      break;
+    case 3: // Aerial
+      camera.position.set(0, 80, 0);
+      camera.lookAt(0, 0, -50);
+      break;
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  GAME TICK (resource simulation)
+// ═══════════════════════════════════════════════
+let lastTick = 0;
+let storyTimer = 0;
+let weatherTimer = 0;
+let notifTimer = 0;
+
+function gameTick(dt) {
+  if (G.paused) return;
+
+  // Advance time
+  G.time += dt * 2; // 1 real second = 2 game minutes
+  if (G.time >= 1440) {
+    G.time -= 1440;
+    G.day++;
+    G.regionIdx = Math.floor(G.distanceTraveled / 800);
+    showNotif(`Day ${G.day} — ${G.regions[G.regionIdx % G.regions.length]}`, 'good');
+  }
+
+  // Distance
+  G.distanceTraveled += G.speed * dt / 3600;
+
+  // Resource drain
+  const drainRate = dt * 0.015;
+  G.resources.fuel     -= drainRate * 1.2 * (G.weather.type === 'blizzard' ? 1.5 : 1);
+  G.resources.food     -= drainRate * 0.8;
+  G.resources.heat     -= drainRate * 0.5 * (G.weather.type === 'blizzard' ? 2 : 1);
+  G.resources.power    -= drainRate * 0.4;
+  G.resources.medicine -= drainRate * 0.2;
+
+  // Morale: affected by other resources
+  const avgRes = (G.resources.fuel + G.resources.food + G.resources.heat) / 3;
+  if (avgRes < 30) G.resources.morale -= drainRate * 0.8;
+  else if (avgRes > 70) G.resources.morale += drainRate * 0.2;
+  G.resources.morale = Math.max(0, Math.min(100, G.resources.morale));
+
+  clampResources();
+
+  // Weather change
+  weatherTimer += dt;
+  if (weatherTimer > 120) {
+    weatherTimer = 0;
+    const r = Math.random();
+    if (r < 0.5)      G.weather = { type:'snow',     temp:-34 - Math.random()*10, intensity:0.35+Math.random()*0.3 };
+    else if (r < 0.7) G.weather = { type:'blizzard', temp:-48 - Math.random()*10, intensity:0.8+Math.random()*0.2 };
+    else if (r < 0.85)G.weather = { type:'clear',    temp:-28 - Math.random()*5,  intensity:0.05 };
+    else if (r < 0.95)G.weather = { type:'aurora',   temp:-31 - Math.random()*8,  intensity:0.2 };
+    else               G.weather = { type:'fog',      temp:-39 - Math.random()*8,  intensity:0.3 };
+    const wt = WEATHER_TYPES.find(w => w.type === G.weather.type);
+    if (wt) showNotif(`Weather: ${wt.icon} ${wt.desc}`, G.weather.type === 'blizzard' ? 'warning' : '');
+  }
+
+  // Story events every ~80 seconds
+  storyTimer += dt;
+  if (storyTimer > 80 + Math.random() * 60) {
+    storyTimer = 0;
+    triggerStoryEvent();
+  }
+
+  // Random notifications
+  notifTimer += dt;
+  if (notifTimer > 25 + Math.random() * 20) {
+    notifTimer = 0;
+    const msgs = [
+      ['Passengers enjoying the observation deck.', 'good'],
+      ['Engineer reports engine running smoothly.', ''],
+      ['Children playing in Wagon 4.', 'good'],
+      ['Thermal imaging detects distant ruins.', ''],
+      ['Aurora borealis visible from windows.', 'good'],
+      ['Greenhouse crops showing healthy growth.', 'good'],
+      ['Wind speeds increasing outside.', 'warning'],
+      ['Medical bay treating minor frostbite cases.', 'warning'],
+      ['Music echoing from the dining hall.', 'good'],
+    ];
+    const [msg, type] = msgs[Math.floor(Math.random() * msgs.length)];
+    showNotif(msg, type);
+  }
+
+  // NPC mood drift
+  if (Math.random() < 0.01) {
+    const npc = NPCS[Math.floor(Math.random() * NPCS.length)];
+    npc.moodVal = Math.max(20, Math.min(100, npc.moodVal + (Math.random()-0.5)*10));
+    const moods = ['Happy','Hopeful','Content','Focused','Alert','Tired','Worried','Anxious'];
+    npc.mood = moods[Math.floor(npc.moodVal / 13)];
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  MAIN LOOP
+// ═══════════════════════════════════════════════
+let prevTime = 0;
+let worldOffset = 0;
+let hudUpdateTimer = 0;
+let minimapTimer = 0;
+
+function animate(now) {
+  requestAnimationFrame(animate);
+  const rawDt = Math.min((now - prevTime) / 1000, 0.1);
+  prevTime = now;
+  const dt = G.paused ? 0 : rawDt;
+  const t = now / 1000;
+
+  if (!gameStarted) return;
+
+  // Game logic
+  gameTick(rawDt); // always tick for weather/notif even if tiny dt
+
+  // Scroll terrain / world
+  worldOffset += G.speed * dt / 36;
+
+  // Move train slightly
+  trainGroup.position.z = 0;
+  trainGroup.position.y = Math.sin(t * 0.8) * 0.08;
+
+  // Rotate wheels
+  trainGroup.children.forEach(c => {
+    if (c.geometry && c.geometry.type === 'CylinderGeometry' &&
+        c.geometry.parameters && c.geometry.parameters.radiusTop > 0.5) {
+      c.rotation.x += dt * (G.speed / 20);
+    }
+  });
+
+  // Steam
+  updateSteam();
+
+  // Snow
+  updateSnow(dt);
+
+  // Sky time
+  skyShaderMat.uniforms.time.value = t;
+  const dayFrac = (G.time % 1440) / 1440;
+  const night = dayFrac < 0.25 || dayFrac > 0.85;
+  const dawnDusk = (dayFrac > 0.22 && dayFrac < 0.32) || (dayFrac > 0.72 && dayFrac < 0.82);
+  if (night) {
+    skyShaderMat.uniforms.topColor.value.set(0x040d1a);
+    skyShaderMat.uniforms.bottomColor.value.set(0x0a1525);
+    sunLight.intensity = 0.3;
+    ambientLight.intensity = 0.3;
+  } else if (dawnDusk) {
+    skyShaderMat.uniforms.topColor.value.set(0x1a2a4a);
+    skyShaderMat.uniforms.bottomColor.value.set(0xe8905a);
+    sunLight.color.set(0xffaa44);
+    sunLight.intensity = 1.5;
+    ambientLight.intensity = 0.6;
+  } else {
+    skyShaderMat.uniforms.topColor.value.set(0x1a3a5c);
+    skyShaderMat.uniforms.bottomColor.value.set(0x8ecae6);
+    sunLight.color.set(0xfff5d0);
+    sunLight.intensity = 2.2;
+    ambientLight.intensity = 0.8;
+  }
+
+  // Aurora
+  auroraObj.userData.isMat.uniforms.time.value = t;
+  auroraObj.material.opacity = G.weather.type === 'aurora' ? 0.6 : night ? 0.25 : 0;
+
+  // Fog density for blizzard
+  scene.fog.near  = G.weather.type === 'blizzard' ? 20 : 80;
+  scene.fog.far   = G.weather.type === 'blizzard' ? 90 : 320;
+  scene.fog.color.set(G.weather.type === 'blizzard' ? 0xb0c8d8 : 0xc8dff0);
+
+  // Scroll world objects
+  scene.children.forEach(obj => {
+    if (obj === trainGroup || obj === sky || obj === snowSystem) return;
+    if (obj.userData.scrollable !== false) {
+      obj.position.z += G.speed * dt / 36;
+      if (obj.position.z > 200)  obj.position.z -= 500;
+      if (obj.position.z < -300) obj.position.z += 500;
+    }
+  });
+
+  // Camera
+  updateCamera(t);
+
+  // HUD update throttled
+  hudUpdateTimer += rawDt;
+  if (hudUpdateTimer > 0.5) {
+    hudUpdateTimer = 0;
+    updateHUD();
+  }
+
+  // Minimap
+  minimapTimer += rawDt;
+  if (minimapTimer > 1) {
+    minimapTimer = 0;
+    drawMinimap();
+  }
+
+  // 2D Snow
+  drawSnow2D();
+
+  renderer.render(scene, camera);
+}
+
+// ═══════════════════════════════════════════════
+//  STARTUP SEQUENCE
+// ═══════════════════════════════════════════════
+let gameStarted = false;
+
+async function loadingSequence() {
+  const bar  = document.getElementById('load-bar');
+  const text = document.getElementById('load-text');
+  const steps = [
+    [10,'Initializing physics…'],
+    [25,'Loading frozen world…'],
+    [40,'Building the train…'],
+    [55,'Spawning passengers…'],
+    [68,'Generating weather systems…'],
+    [80,'Calibrating survival systems…'],
+    [92,'Placing abandoned ruins…'],
+    [100,'Ready to depart…'],
+  ];
+  for (const [pct, msg] of steps) {
+    bar.style.width = pct + '%';
+    text.textContent = msg;
+    await new Promise(r => setTimeout(r, 280));
+  }
+  await new Promise(r => setTimeout(r, 400));
+  document.getElementById('loading').classList.add('hidden');
+}
+
+document.getElementById('btn-start').addEventListener('click', () => {
+  document.getElementById('title-screen').classList.add('hidden');
+  setTimeout(() => {
+    document.getElementById('hud').classList.add('visible');
+    gameStarted = true;
+    showNotif('Journey begins. The engines roar to life.', 'good');
+    showNotif('847 souls aboard. You are their captain.', '');
+    updateHUD();
+  }, 1200);
+});
+
+// Start animation loop immediately (renders title bg)
+prevTime = performance.now();
+requestAnimationFrame(animate);
+
+// Loading
+loadingSequence();
+
+// NPC scroll (mark objects as scrollable)
+scene.children.forEach(obj => { obj.userData.scrollable = true; });
+trainGroup.userData.scrollable = false;
+sky.userData.scrollable = false;
+snowSystem.userData.scrollable = false;
+
+// Initial minimap and HUD
+drawMinimap();
+updateHUD();
+
+// Keyboard
+window.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    ['train-modal','explore-modal','story-overlay'].forEach(id => {
+      document.getElementById(id).classList.remove('open');
+    });
+  }
+  if (e.key === ' ') togglePause();
+  if (e.key === 'c' || e.key === 'C') toggleCamera();
+  if (e.key === 't' || e.key === 'T') openTrainModal();
+  if (e.key === 'e' || e.key === 'E') openExploreModal();
+});
+
+console.log('%cTHE LAST TRAIN', 'color:#7fffd4;font-size:22px;font-weight:bold;font-family:serif;');
+console.log('%cKeys: SPACE=pause, C=camera, T=train, E=explore, ESC=close panels', 'color:#aaa;');
+</script>
+</body>
+</html>
