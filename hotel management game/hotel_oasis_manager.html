@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hotel Oasis Manager</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --gold: #C9A84C; --gold-light: #E8D08A; --gold-dark: #8B6914;
+  --dark: #1A1A2E; --deep: #0D0D1A; --surface: #16213E;
+  --text: #F0EAD6; --muted: #8B9CC8;
+  --green: #2ECC71; --red: #E74C3C; --blue: #3498DB;
+  --orange: #F39C12; --teal: #1ABC9C; --purple: #9B59B6;
+}
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--deep); color: var(--text); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+#topbar { background: var(--dark); border-bottom: 2px solid var(--gold-dark); display: flex; align-items: center; padding: 0 16px; height: 52px; gap: 10px; flex-shrink: 0; flex-wrap: wrap; }
+.logo { font-size: 17px; font-weight: 800; color: var(--gold); letter-spacing: 1px; white-space: nowrap; }
+.logo span { color: var(--text); font-weight: 300; }
+.stat-pill { display: flex; align-items: center; gap: 5px; background: var(--surface); border: 1px solid rgba(201,168,76,0.3); border-radius: 20px; padding: 4px 10px; font-size: 12px; white-space: nowrap; }
+.stat-pill .val { font-weight: 700; }
+.stat-pill .lbl { color: var(--muted); font-size: 11px; }
+#game-time { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--gold-light); }
+#speed-btns { display: flex; gap: 4px; }
+.spd-btn { background: var(--surface); border: 1px solid rgba(201,168,76,0.3); color: var(--text); border-radius: 4px; padding: 3px 8px; font-size: 11px; cursor: pointer; }
+.spd-btn.active { background: var(--gold-dark); border-color: var(--gold); color: var(--gold-light); }
+#main { display: flex; flex: 1; overflow: hidden; }
+#hotel-view { flex: 1; position: relative; overflow: hidden; }
+#hotelCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; }
+#panel { width: 290px; background: var(--dark); border-left: 1px solid rgba(201,168,76,0.2); display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0; }
+.panel-tabs { display: flex; border-bottom: 1px solid rgba(201,168,76,0.2); flex-shrink: 0; overflow-x: auto; }
+.ptab { flex: 1; padding: 9px 4px; text-align: center; font-size: 10px; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap; }
+.ptab.active { color: var(--gold); border-bottom-color: var(--gold); }
+.panel-content { flex: 1; overflow-y: auto; padding: 10px; display: none; }
+.panel-content.active { display: block; }
+.panel-content::-webkit-scrollbar { width: 3px; }
+.panel-content::-webkit-scrollbar-thumb { background: var(--surface); }
+.sec { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--gold); margin: 10px 0 6px; display: flex; align-items: center; gap: 6px; }
+.sec::after { content: ''; flex: 1; height: 1px; background: rgba(201,168,76,0.2); }
+.room-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.room-card { background: var(--surface); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; padding: 8px; cursor: pointer; transition: border-color 0.2s; }
+.room-card:hover { border-color: var(--gold); }
+.room-num { font-size: 13px; font-weight: 700; color: var(--gold-light); }
+.room-type { font-size: 10px; color: var(--muted); margin-bottom: 3px; }
+.rs { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 700; text-transform: uppercase; }
+.rs-vacant { background: rgba(46,204,113,0.15); color: var(--green); }
+.rs-occupied { background: rgba(52,152,219,0.15); color: var(--blue); }
+.rs-cleaning { background: rgba(243,156,18,0.15); color: var(--orange); }
+.rs-maintenance { background: rgba(231,76,60,0.15); color: var(--red); }
+.guest-item { display: flex; align-items: center; gap: 8px; padding: 7px 8px; background: var(--surface); border-radius: 8px; margin-bottom: 5px; cursor: pointer; border: 1px solid transparent; transition: border-color 0.2s; }
+.guest-item:hover { border-color: rgba(201,168,76,0.3); }
+.avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+.gi { flex: 1; min-width: 0; }
+.gn { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gd { font-size: 10px; color: var(--muted); }
+.staff-item { display: flex; align-items: center; gap: 8px; padding: 7px 8px; background: var(--surface); border-radius: 8px; margin-bottom: 5px; cursor: pointer; border: 1px solid transparent; transition: border-color 0.2s; }
+.staff-item:hover { border-color: rgba(201,168,76,0.3); }
+.role-badge { font-size: 9px; padding: 2px 5px; border-radius: 4px; font-weight: 700; text-transform: uppercase; }
+.r-receptionist { background: rgba(52,152,219,0.2); color: #5DADE2; }
+.r-cleaner { background: rgba(46,204,113,0.2); color: #58D68D; }
+.r-chef { background: rgba(243,156,18,0.2); color: #F5B041; }
+.r-security { background: rgba(231,76,60,0.2); color: #EC7063; }
+.r-maintenance { background: rgba(155,89,182,0.2); color: #AF7AC5; }
+.fin-row { display: flex; justify-content: space-between; padding: 6px 8px; background: var(--surface); border-radius: 6px; margin-bottom: 4px; font-size: 12px; }
+.fin-row .l { color: var(--muted); }
+.pos { color: var(--green); font-weight: 700; }
+.neg { color: var(--red); font-weight: 700; }
+.neu { color: var(--gold-light); font-weight: 700; }
+.ev-item { display: flex; gap: 8px; padding: 8px; background: var(--surface); border-radius: 8px; margin-bottom: 5px; border-left: 3px solid var(--gold); }
+.ev-item.ev-bad { border-left-color: var(--red); }
+.ev-item.ev-warn { border-left-color: var(--orange); }
+.ev-item.ev-good { border-left-color: var(--green); }
+.ev-txt { font-size: 11px; line-height: 1.5; }
+.ev-time { font-size: 10px; color: var(--muted); }
+.upg-item { background: var(--surface); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 10px; margin-bottom: 6px; display: flex; gap: 10px; align-items: center; }
+.upg-icon { font-size: 22px; flex-shrink: 0; }
+.upg-info { flex: 1; }
+.upg-name { font-size: 12px; font-weight: 600; }
+.upg-desc { font-size: 10px; color: var(--muted); margin: 2px 0; }
+.upg-cost { font-size: 11px; color: var(--gold); font-weight: 700; }
+.btn { display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; border: none; transition: all 0.15s; text-transform: uppercase; letter-spacing: 0.5px; }
+.btn-gold { background: var(--gold-dark); color: var(--gold-light); border: 1px solid var(--gold); }
+.btn-gold:hover { background: var(--gold); color: var(--dark); }
+.btn-red { background: rgba(231,76,60,0.2); color: var(--red); border: 1px solid rgba(231,76,60,0.4); }
+.btn-red:hover { background: var(--red); color: white; }
+.btn-green { background: rgba(46,204,113,0.15); color: var(--green); border: 1px solid rgba(46,204,113,0.4); }
+.btn-green:hover { background: var(--green); color: var(--dark); }
+.btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+#modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 1000; }
+#modal-overlay.open { display: flex; }
+#modal-box { background: var(--dark); border: 1px solid var(--gold-dark); border-radius: 12px; padding: 22px; min-width: 300px; max-width: 400px; width: 90vw; position: relative; }
+#modal-box h2 { font-size: 16px; color: var(--gold); margin-bottom: 14px; }
+.close-btn { position: absolute; top: 12px; right: 14px; background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; }
+.fg { margin-bottom: 11px; }
+.fg label { font-size: 10px; color: var(--muted); display: block; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
+.fg input, .fg select { width: 100%; background: var(--surface); border: 1px solid rgba(255,255,255,0.1); color: var(--text); padding: 7px 10px; border-radius: 6px; font-size: 13px; }
+.fg input:focus, .fg select:focus { outline: none; border-color: var(--gold); }
+#toast-container { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 2000; display: flex; flex-direction: column-reverse; gap: 6px; align-items: center; }
+.toast { padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 700; border: 1px solid; animation: tIn 0.3s ease; pointer-events: none; white-space: nowrap; }
+.t-gold { background: rgba(201,168,76,0.2); border-color: var(--gold); color: var(--gold-light); }
+.t-green { background: rgba(46,204,113,0.2); border-color: var(--green); color: #5BDB9A; }
+.t-red { background: rgba(231,76,60,0.2); border-color: var(--red); color: #F19A93; }
+@keyframes tIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+.bar-wrap { background: rgba(255,255,255,0.07); border-radius: 4px; height: 7px; margin-top: 3px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s; }
+.sat-row { display: flex; align-items: center; gap: 8px; padding: 7px 8px; background: var(--surface); border-radius: 8px; margin-bottom: 5px; }
+.sat-lbl { font-size: 11px; color: var(--muted); width: 90px; flex-shrink: 0; }
+.sat-bar { flex: 1; background: rgba(255,255,255,0.06); border-radius: 4px; height: 8px; overflow: hidden; }
+.sat-fill { height: 100%; border-radius: 4px; }
+.sat-val { font-size: 11px; font-weight: 700; width: 34px; text-align: right; }
+.review-card { background: var(--surface); border-radius: 8px; padding: 8px 10px; margin-bottom: 5px; }
+.rev-hdr { display: flex; justify-content: space-between; margin-bottom: 3px; }
+.rev-auth { font-weight: 600; font-size: 12px; }
+.rev-txt { font-size: 11px; color: var(--muted); line-height: 1.5; }
+.stars { color: var(--gold); font-size: 13px; }
+#bottombar { background: var(--dark); border-top: 1px solid rgba(201,168,76,0.15); display: flex; align-items: center; gap: 14px; padding: 5px 16px; font-size: 10px; color: var(--muted); flex-shrink: 0; }
+kbd { background: var(--surface); border: 1px solid rgba(255,255,255,0.1); border-radius: 3px; padding: 1px 5px; font-size: 10px; color: var(--text); }
+.ndot { display: inline-block; width: 6px; height: 6px; background: var(--red); border-radius: 50%; position: absolute; top: 5px; right: 2px; }
+.ptab { position: relative; }
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="logo">HOTEL <span>OASIS</span> ✦ MANAGER</div>
+  <div class="stat-pill">💰 <span class="val" id="s-money">$50,000</span> <span class="lbl">Balance</span></div>
+  <div class="stat-pill">📈 <span class="val" id="s-rev">+$0</span> <span class="lbl">Today</span></div>
+  <div class="stat-pill">🏨 <span class="val" id="s-occ">25%</span> <span class="lbl">Occupancy</span></div>
+  <div class="stat-pill">⭐ <span class="val" id="s-rat">4.2</span> <span class="lbl">Rating</span></div>
+  <div class="stat-pill">😊 <span class="val" id="s-sat">80%</span> <span class="lbl">Satisfaction</span></div>
+  <div id="game-time">
+    <span id="s-time">Day 1 — 08:00</span>
+    <div id="speed-btns">
+      <button class="spd-btn active" onclick="setSpeed(1)">1x</button>
+      <button class="spd-btn" onclick="setSpeed(3)">3x</button>
+      <button class="spd-btn" onclick="setSpeed(0)">⏸</button>
+    </div>
+  </div>
+</div>
+
+<div id="main">
+  <div id="hotel-view">
+    <canvas id="hotelCanvas"></canvas>
+  </div>
+  <div id="panel">
+    <div class="panel-tabs">
+      <div class="ptab active" onclick="showTab('rooms')" id="tab-rooms">Rooms</div>
+      <div class="ptab" onclick="showTab('guests')" id="tab-guests">Guests</div>
+      <div class="ptab" onclick="showTab('staff')" id="tab-staff">Staff</div>
+      <div class="ptab" onclick="showTab('finance')" id="tab-finance">Finance</div>
+      <div class="ptab" onclick="showTab('events')" id="tab-events">Events<span class="ndot" id="edot" style="display:none"></span></div>
+      <div class="ptab" onclick="showTab('upgrades')" id="tab-upgrades">Upgrades</div>
+    </div>
+    <div class="panel-content active" id="pc-rooms">
+      <div class="sec">Room Status</div>
+      <div class="room-grid" id="room-grid"></div>
+      <div class="sec">Guest Reviews</div>
+      <div id="review-list"></div>
+    </div>
+    <div class="panel-content" id="pc-guests">
+      <div class="sec">Current Guests</div>
+      <div id="guest-list"></div>
+      <div class="btn-row"><button class="btn btn-gold" onclick="openCheckin()">+ Check-In Guest</button></div>
+      <div class="sec" style="margin-top:12px">Satisfaction</div>
+      <div id="sat-metrics"></div>
+    </div>
+    <div class="panel-content" id="pc-staff">
+      <div class="sec">Staff (<span id="staff-count">3</span>)</div>
+      <div id="staff-list"></div>
+      <div class="btn-row"><button class="btn btn-gold" onclick="openHire()">+ Hire Staff</button></div>
+    </div>
+    <div class="panel-content" id="pc-finance">
+      <div class="sec">Daily Summary</div>
+      <div id="fin-summary"></div>
+      <div class="sec">Occupancy History</div>
+      <canvas id="occChart" width="260" height="75" style="margin-top:4px;border-radius:6px"></canvas>
+    </div>
+    <div class="panel-content" id="pc-events">
+      <div class="sec">Event Log</div>
+      <div id="event-list"></div>
+    </div>
+    <div class="panel-content" id="pc-upgrades">
+      <div class="sec">Upgrades</div>
+      <div id="upg-list"></div>
+    </div>
+  </div>
+</div>
+
+<div id="bottombar">
+  <span><kbd>C</kbd> Check-In</span>
+  <span><kbd>H</kbd> Hire</span>
+  <span><kbd>+/-</kbd> Zoom</span>
+  <span><kbd>Drag</kbd> Pan</span>
+  <span style="margin-left:auto;color:var(--gold);font-weight:700">Hotel Oasis Manager v1.0</span>
+</div>
+
+<div id="modal-overlay">
+  <div id="modal-box">
+    <button class="close-btn" onclick="closeModal()">✕</button>
+    <h2 id="modal-title"></h2>
+    <div id="modal-body"></div>
+  </div>
+</div>
+<div id="toast-container"></div>
+
+<script>
+// ── STATE ──────────────────────────────────────
+const G = {
+  money: 50000, day: 1, hour: 8, min: 0, speed: 1,
+  revenue: 0, expenses: 0, rating: 4.2, satisfaction: 80,
+  level: 3, xp: 0, xpNext: 1000, occHistory: [], events: [],
+};
+
+const NAMES = ['James Carter','Sophia Chen','Oliver Hayes','Amara Okafor','Liam Torres',
+  'Isabella Patel','Noah Kim','Charlotte Rossi','Ethan Müller','Ava Johansson',
+  'Mason Al-Farsi','Luna Nakamura','Elijah Brooks','Chloe Dubois','Mia Andersen'];
+
+const ROOM_TYPES = ['Standard','Deluxe','Suite','Junior Suite','Presidential','Ocean View'];
+const ROOM_PRICES = [120,180,350,280,800,250];
+const ROLES = ['Receptionist','Cleaner','Chef','Security','Maintenance'];
+const ROLE_SAL = [200,160,240,180,220];
+const ROLE_CLR = ['#3498DB','#2ECC71','#F39C12','#E74C3C','#9B59B6'];
+const ROLE_TASK = ['At front desk','Cleaning rounds','In kitchen','On patrol','Checking equipment'];
+const MOODS = ['😄','😊','😐','😕','😠'];
+const AVATARCLRS = ['#E74C3C','#3498DB','#2ECC71','#9B59B6','#F39C12','#1ABC9C','#E91E8C','#FF5733','#00BCD4'];
+
+// ── ROOMS ──
+const rooms = [];
+for (let f = 0; f < 3; f++) {
+  for (let r = 0; r < 4; r++) {
+    const ti = Math.min(f + (r > 2 ? 1 : 0), 5);
+    rooms.push({ id:(f+1)*100+(r+1), floor:f+1, num:(f+1)*100+(r+1),
+      type:ROOM_TYPES[ti], price:ROOM_PRICES[ti],
+      status:'vacant', guest:null, clean:100, maint:100 });
+  }
+}
+
+// ── STAFF ──
+const staff = [
+  { id:1, name:'Maria Santos', role:'Receptionist', salary:200, mood:90, task:'At front desk', color:'#3498DB' },
+  { id:2, name:'Tom Bradley', role:'Cleaner', salary:160, mood:85, task:'Cleaning rounds', color:'#2ECC71' },
+  { id:3, name:'Jean-Pierre Blanc', role:'Chef', salary:240, mood:92, task:'In kitchen', color:'#F39C12' },
+];
+
+// ── GUESTS ──
+const guests = [];
+
+// ── REVIEWS ──
+const reviews = [
+  { name:'William P.', stars:5, text:'Absolutely stunning resort. Impeccable service!' },
+  { name:'Rachel M.', stars:4, text:'Beautiful rooms, could improve breakfast options.' },
+  { name:'David K.', stars:3, text:'Nice location but maintenance could be better.' },
+];
+
+// ── UPGRADES ──
+const UPGRADES = [
+  { id:'pool', icon:'🏊', name:'Rooftop Pool', desc:'Satisfaction +15%, attracts luxury guests', cost:8000, bought:false },
+  { id:'spa', icon:'💆', name:'Luxury Spa', desc:'+$200/day extra revenue', cost:12000, bought:false },
+  { id:'gym', icon:'🏋️', name:'Fitness Center', desc:'Satisfaction +8%', cost:5000, bought:false },
+  { id:'restaurant', icon:'🍽️', name:'Fine Dining', desc:'+$150/day, guests stay longer', cost:9500, bought:false },
+  { id:'concierge', icon:'🎩', name:'VIP Concierge', desc:'Premium pricing +20%', cost:6000, bought:false },
+  { id:'rooms', icon:'🛏️', name:'4 New Rooms', desc:'Expand to Floor 4', cost:15000, bought:false },
+  { id:'solar', icon:'☀️', name:'Solar Panels', desc:'Utility costs -30%', cost:7000, bought:false },
+  { id:'security', icon:'🔒', name:'Smart Security', desc:'Guest confidence +10%', cost:4000, bought:false },
+];
+
+// ── CANVAS ────────────────────────────────────
+const canvas = document.getElementById('hotelCanvas');
+const ctx = canvas.getContext('2d');
+let zoom = 1, camX = 0, camY = 0, frame = 0;
+
+function resize() {
+  const v = document.getElementById('hotel-view');
+  canvas.width = v.clientWidth;
+  canvas.height = v.clientHeight;
+}
+
+window.addEventListener('resize', () => { resize(); draw(); });
+
+function iso(x, y, z) {
+  const ix = (x - y) * 28 * zoom;
+  const iy = (x + y) * 14 * zoom - z * 22 * zoom;
+  return { x: canvas.width/2 + ix + camX, y: canvas.height*0.55 + iy + camY };
+}
+
+function cuboid(x,y,z,w,d,h,ct,cl,cr) {
+  const tl=iso(x,y,z+h), tr=iso(x+w,y,z+h), br=iso(x+w,y+d,z+h), bl=iso(x,y+d,z+h);
+  const ftl=iso(x,y,z), ftr=iso(x+w,y,z), fbl=iso(x+w,y+d,z), fbr=iso(x,y+d,z);
+  // top
+  ctx.beginPath(); ctx.moveTo(tl.x,tl.y); ctx.lineTo(tr.x,tr.y); ctx.lineTo(br.x,br.y); ctx.lineTo(bl.x,bl.y); ctx.closePath();
+  ctx.fillStyle=ct; ctx.fill(); ctx.strokeStyle='rgba(0,0,0,0.25)'; ctx.lineWidth=0.6; ctx.stroke();
+  // left
+  ctx.beginPath(); ctx.moveTo(tl.x,tl.y); ctx.lineTo(ftl.x,ftl.y); ctx.lineTo(fbr.x,fbr.y); ctx.lineTo(bl.x,bl.y); ctx.closePath();
+  ctx.fillStyle=cl; ctx.fill(); ctx.stroke();
+  // right
+  ctx.beginPath(); ctx.moveTo(tr.x,tr.y); ctx.lineTo(ftr.x,ftr.y); ctx.lineTo(fbl.x,fbl.y); ctx.lineTo(br.x,br.y); ctx.closePath();
+  ctx.fillStyle=cr; ctx.fill(); ctx.stroke();
+}
+
+const npcs = [];
+function spawnNPC() {
+  if (npcs.length < 18) npcs.push({ x:(Math.random()-0.5)*18, y:(Math.random()-0.5)*12,
+    vx:(Math.random()-0.5)*0.04, vy:(Math.random()-0.5)*0.02,
+    color:AVATARCLRS[Math.floor(Math.random()*AVATARCLRS.length)] });
+}
+for(let i=0;i<10;i++) spawnNPC();
+setInterval(spawnNPC, 4000);
+
+function draw() {
+  if (!canvas.width || !canvas.height) return;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // Sky
+  const hr = G.hour + G.min/60;
+  const sky = ctx.createLinearGradient(0,0,0,canvas.height);
+  if (hr<6||hr>21) { sky.addColorStop(0,'#05051a'); sky.addColorStop(1,'#0d0d2e'); }
+  else if (hr<9) { sky.addColorStop(0,'#c05010'); sky.addColorStop(1,'#f0a060'); }
+  else if (hr<18) { sky.addColorStop(0,'#1a4070'); sky.addColorStop(1,'#2a6aa0'); }
+  else { sky.addColorStop(0,'#8b2010'); sky.addColorStop(1,'#c04020'); }
+  ctx.fillStyle=sky; ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  // Stars at night
+  if (hr<6||hr>21) {
+    for(let i=0;i<80;i++){
+      const sx=(i*173)%canvas.width, sy=(i*97)%(canvas.height*0.5);
+      const b=0.3+0.7*Math.abs(Math.sin(frame*0.04+i));
+      ctx.fillStyle=`rgba(255,255,255,${b})`; ctx.fillRect(sx,sy,1.5,1.5);
+    }
+  }
+
+  // Sun
+  const sunX=canvas.width*((hr-5)/16);
+  const sunY=canvas.height*0.22-Math.sin(Math.max(0,(hr-6)/14)*Math.PI)*canvas.height*0.15;
+  if(hr>=6&&hr<=20){
+    const sg=ctx.createRadialGradient(sunX,sunY,0,sunX,sunY,25);
+    sg.addColorStop(0,'#FFFDE7'); sg.addColorStop(0.5,'rgba(255,220,80,0.6)'); sg.addColorStop(1,'rgba(255,200,0,0)');
+    ctx.fillStyle=sg; ctx.beginPath(); ctx.arc(sunX,sunY,25,0,Math.PI*2); ctx.fill();
+  } else {
+    ctx.fillStyle='#d8d0b8'; ctx.beginPath(); ctx.arc(70,55,15,0,Math.PI*2); ctx.fill();
+  }
+
+  // Clouds
+  if(hr>=6&&hr<=20){
+    [[canvas.width*0.2,canvas.height*0.15],[canvas.width*0.6,canvas.height*0.1],[canvas.width*0.8,canvas.height*0.2]].forEach(([cx,cy])=>{
+      ctx.fillStyle='rgba(255,255,255,0.15)';
+      ctx.beginPath(); ctx.arc(cx,cy,30,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx+25,cy-5,22,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx-20,cy+5,18,0,Math.PI*2); ctx.fill();
+    });
+  }
+
+  // Ground
+  const g1=iso(-12,-8,0),g2=iso(14,-8,0),g3=iso(14,12,0),g4=iso(-12,12,0);
+  ctx.beginPath(); ctx.moveTo(g1.x,g1.y); ctx.lineTo(g2.x,g2.y); ctx.lineTo(g3.x,g3.y); ctx.lineTo(g4.x,g4.y); ctx.closePath();
+  const gg=ctx.createLinearGradient(g1.x,g1.y,g3.x,g3.y);
+  gg.addColorStop(0,'#1a3d1a'); gg.addColorStop(1,'#143214');
+  ctx.fillStyle=gg; ctx.fill();
+
+  // Path
+  const p1=iso(-1,-8,0.01),p2=iso(1,-8,0.01),p3=iso(1,12,0.01),p4=iso(-1,12,0.01);
+  ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.lineTo(p3.x,p3.y); ctx.lineTo(p4.x,p4.y); ctx.closePath();
+  ctx.fillStyle='#252535'; ctx.fill();
+
+  // Pool
+  cuboid(-4.5,4,0,4,3,0.25,'#1890ff','#1060b0','#0d50a0');
+  const pp=iso(-2.5,5.5,0.28);
+  ctx.fillStyle=`rgba(80,180,255,${0.35+0.15*Math.sin(frame*0.07)})`;
+  ctx.beginPath(); ctx.ellipse(pp.x,pp.y,16*zoom,8*zoom,0,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='rgba(150,220,255,0.5)'; ctx.lineWidth=1; ctx.stroke();
+
+  // Pool label
+  const plab=iso(-3,4.3,0.35);
+  ctx.fillStyle='rgba(150,220,255,0.8)'; ctx.font=`bold ${9*zoom}px sans-serif`; ctx.textAlign='center';
+  ctx.fillText('POOL',plab.x,plab.y);
+
+  // Gym building
+  cuboid(-8,-6,0,2.5,2.5,1,'#1e3a5a','#142840','#162f4e');
+  const gl=iso(-7,-4.8,1.1); ctx.fillStyle='#7fb3d8'; ctx.font=`bold ${8*zoom}px sans-serif`; ctx.textAlign='center';
+  ctx.fillText('GYM',gl.x,gl.y);
+
+  // Restaurant
+  cuboid(3,-5,0,3,3,0.8,'#2a1a0a','#1a1008','#221408');
+  const rl=iso(4.5,-3.8,0.95); ctx.fillStyle='#d4956a'; ctx.font=`bold ${8*zoom}px sans-serif`;
+  ctx.fillText('RESTAURANT',rl.x,rl.y);
+  // Tables in restaurant
+  [[3.5,-4.3],[4.5,-3.5],[3.8,-2.8]].forEach(([tx,ty])=>{
+    cuboid(tx,ty,0.8,0.5,0.5,0.1,'#8B4513','#5c2e0a','#6e3810');
+  });
+
+  // Parking
+  cuboid(-9,-4,0,4,7,0.05,'#1e1e2e','#181828','#1c1c26');
+  // Cars based on guest count
+  const carPositions=[[-8.5,-3.5],[-7.2,-3.5],[-8.5,-1],[-7.2,-1],[-8.5,1.5],[-7.2,1.5]];
+  const carColors=['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c'];
+  for(let i=0;i<Math.min(guests.length+1,carPositions.length);i++){
+    cuboid(carPositions[i][0],carPositions[i][1],0.05,0.9,0.5,0.25,carColors[i],'#555','#444');
+  }
+
+  // Main hotel — 3 floors
+  const floorColors=[
+    ['#24395a','#1a2840','#1e3050'],
+    ['#2a4060','#1d2e48','#223558'],
+    ['#305070','#243852','#2a3f62'],
+  ];
+  floorColors.forEach((c,f)=>{
+    cuboid(-2.5,-6,f,5,5,1,c[0],c[1],c[2]);
+  });
+  // Roof / penthouse
+  cuboid(-2,-5.5,3,4,4,0.9,'#C9A84C','#8B6914','#a07c1e');
+  // Penthouse top
+  cuboid(-1,-4.5,3.9,2,2,0.4,'#E8D08A','#C9A84C','#b8902e');
+
+  // Windows on hotel
+  for(let fl=0;fl<3;fl++){
+    for(let col=0;col<4;col++){
+      for(let side=0;side<2;side++){
+        const wx=-2.2+col*1.1, wz=fl+0.3;
+        const wy=side===0?-6.05:-1.05;
+        const wp=iso(wx,wy,wz);
+        const lit=(hr>=7&&hr<=22)||Math.random()>0.6;
+        ctx.fillStyle=lit?`rgba(255,230,100,${0.5+0.3*Math.sin(frame*0.05+fl+col)})`:'rgba(20,40,70,0.95)';
+        ctx.fillRect(wp.x-5*zoom,wp.y-4*zoom,10*zoom,8*zoom);
+        ctx.strokeStyle='rgba(0,0,0,0.4)'; ctx.lineWidth=0.5;
+        ctx.strokeRect(wp.x-5*zoom,wp.y-4*zoom,10*zoom,8*zoom);
+      }
+    }
+  }
+
+  // Hotel sign
+  const sp=iso(0,-6.15,3.6);
+  ctx.shadowColor='rgba(201,168,76,0.8)'; ctx.shadowBlur=10;
+  ctx.fillStyle='#C9A84C'; ctx.font=`bold ${11*zoom}px sans-serif`; ctx.textAlign='center';
+  ctx.fillText('✦ HOTEL OASIS ✦',sp.x,sp.y);
+  ctx.shadowBlur=0;
+
+  // Reception desk
+  cuboid(-0.6,-3.8,0,1.2,0.6,0.5,'#6B4423','#4a2e14','#5a3818');
+
+  // Lobby seating
+  [[-1.8,-2.8],[0.6,-2.8]].forEach(([cx,cy])=>{
+    cuboid(cx,cy,0,0.8,0.8,0.35,'#8B4513','#5c2e0a','#6e3810');
+  });
+
+  // Fountain
+  const fp=iso(-0.5,3.5,0.05);
+  ctx.strokeStyle='#5DADE2'; ctx.lineWidth=1.5*zoom;
+  ctx.beginPath(); ctx.arc(fp.x,fp.y,12*zoom,0,Math.PI*2); ctx.stroke();
+  ctx.fillStyle=`rgba(93,173,226,${0.25+0.15*Math.sin(frame*0.09)})`;
+  ctx.beginPath(); ctx.arc(fp.x,fp.y,7*zoom,0,Math.PI*2); ctx.fill();
+
+  // Palm trees
+  [[-5.5,2.5],[7,3],[7,-1],[6.5,-5]].forEach(([tx,ty])=>{
+    const base=iso(tx,ty,0), top=iso(tx,ty,3);
+    ctx.strokeStyle='#7B5E3B'; ctx.lineWidth=2.5*zoom;
+    ctx.beginPath(); ctx.moveTo(base.x,base.y); ctx.lineTo(top.x,top.y); ctx.stroke();
+    [[-1,0],[1,0],[0,-0.8],[0,0.8],[-0.7,-0.6],[0.7,-0.6],[-0.7,0.6],[0.7,0.6]].forEach(([dx,dy])=>{
+      const lp=iso(tx+dx*0.9,ty+dy*0.9,3);
+      ctx.strokeStyle='#2D7A1A'; ctx.lineWidth=2.5*zoom;
+      ctx.beginPath(); ctx.moveTo(top.x,top.y); ctx.lineTo(lp.x,lp.y); ctx.stroke();
+    });
+  });
+
+  // NPCs
+  npcs.forEach(npc=>{
+    npc.x+=npc.vx; npc.y+=npc.vy;
+    if(Math.abs(npc.x)>10){npc.vx*=-1;}
+    if(Math.abs(npc.y)>8){npc.vy*=-1;}
+    const np=iso(npc.x,npc.y,0.1);
+    // Shadow
+    ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(np.x,np.y+2,4*zoom,2*zoom,0,0,Math.PI*2); ctx.fill();
+    // Body
+    ctx.fillStyle=npc.color; ctx.beginPath(); ctx.arc(np.x,np.y,3.5*zoom,0,Math.PI*2); ctx.fill();
+  });
+
+  // Floor level labels
+  ctx.textAlign='right';
+  for(let f=0;f<3;f++){
+    const lp=iso(-2.6,-6,f+0.5);
+    ctx.font=`${9*zoom}px sans-serif`; ctx.fillStyle='rgba(255,255,255,0.4)';
+    ctx.fillText(`F${f+1}`,lp.x-3,lp.y);
+  }
+
+  // Occupancy bar overlay
+  const occ=getOcc();
+  const bh=Math.round(occ*55*zoom);
+  const bp=iso(-2.7,-6.2,0);
+  ctx.fillStyle='rgba(46,204,113,0.12)';
+  ctx.fillRect(bp.x,bp.y-bh,7*zoom,bh);
+
+  frame++;
+  requestAnimationFrame(draw);
+}
+
+// ── TABS ─────────────────────────────────────
+let activeTab = 'rooms';
+function showTab(t) {
+  document.querySelectorAll('.panel-content').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.ptab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('pc-'+t).classList.add('active');
+  document.getElementById('tab-'+t).classList.add('active');
+  activeTab = t;
+  if(t==='events') document.getElementById('edot').style.display='none';
+  renderPanel();
+}
+
+function renderPanel() {
+  if(activeTab==='rooms') renderRooms();
+  else if(activeTab==='guests') renderGuests();
+  else if(activeTab==='staff') renderStaff();
+  else if(activeTab==='finance') renderFinance();
+  else if(activeTab==='events') renderEvents();
+  else if(activeTab==='upgrades') renderUpgrades();
+}
+
+// ── RENDER ROOMS ──
+function renderRooms() {
+  const g=document.getElementById('room-grid'); g.innerHTML='';
+  rooms.forEach(r=>{
+    const d=document.createElement('div'); d.className='room-card';
+    d.onclick=()=>openRoomModal(r);
+    d.innerHTML=`<div class="room-num">Room ${r.num}</div>
+      <div class="room-type">${r.type}</div>
+      <span class="rs rs-${r.status}">${{vacant:'Vacant',occupied:'Occupied',cleaning:'Cleaning',maintenance:'Maintenance'}[r.status]}</span>
+      <div style="font-size:11px;color:var(--text);margin-top:3px">$${r.price}/night</div>
+      ${r.guest?`<div style="font-size:10px;color:var(--muted)">${r.guest.name}</div>`:''}`;
+    g.appendChild(d);
+  });
+  const rl=document.getElementById('review-list'); rl.innerHTML='';
+  reviews.slice(-4).reverse().forEach(r=>{
+    rl.innerHTML+=`<div class="review-card">
+      <div class="rev-hdr"><span class="rev-auth">${r.name}</span><span class="stars">${'★'.repeat(r.stars)+'☆'.repeat(5-r.stars)}</span></div>
+      <div class="rev-txt">${r.text}</div></div>`;
+  });
+}
+
+// ── RENDER GUESTS ──
+function renderGuests() {
+  const gl=document.getElementById('guest-list'); gl.innerHTML='';
+  if(!guests.length) { gl.innerHTML='<div style="text-align:center;color:var(--muted);padding:20px;font-size:12px">No guests yet. Check someone in!</div>'; }
+  guests.forEach(g=>{
+    const init=g.name.split(' ').map(n=>n[0]).join('').slice(0,2);
+    const mi=Math.min(4,Math.floor((100-g.sat)/20));
+    const d=document.createElement('div'); d.className='guest-item'; d.onclick=()=>openGuestModal(g);
+    d.innerHTML=`<div class="avatar" style="background:${g.color}">${init}</div>
+      <div class="gi"><div class="gn">${g.name}</div><div class="gd">Room ${g.room} · Night ${g.night}/${g.nights}</div></div>
+      <span style="font-size:16px">${MOODS[mi]}</span>`;
+    gl.appendChild(d);
+  });
+  const sm=document.getElementById('sat-metrics'); sm.innerHTML='';
+  const occRooms=rooms.filter(r=>r.status==='occupied');
+  const cleanAvg=occRooms.length?Math.round(occRooms.reduce((a,r)=>a+r.clean,0)/occRooms.length):100;
+  [['Cleanliness',cleanAvg,'#2ECC71'],['Service Speed',Math.min(100,70+staff.length*4),'#3498DB'],
+   ['Amenities',Math.min(100,55+UPGRADES.filter(u=>u.bought).length*9),'#9B59B6'],
+   ['Overall',G.satisfaction,'#C9A84C']].forEach(([l,v,c])=>{
+    sm.innerHTML+=`<div class="sat-row"><div class="sat-lbl">${l}</div>
+      <div class="sat-bar"><div class="sat-fill" style="width:${Math.min(100,v)}%;background:${c}"></div></div>
+      <div class="sat-val" style="color:${c}">${Math.min(100,v)}%</div></div>`;
+  });
+}
+
+// ── RENDER STAFF ──
+function renderStaff() {
+  document.getElementById('staff-count').textContent=staff.length;
+  const sl=document.getElementById('staff-list'); sl.innerHTML='';
+  staff.forEach(s=>{
+    const init=s.name.split(' ').map(n=>n[0]).join('').slice(0,2);
+    sl.innerHTML+=`<div class="staff-item" onclick="openStaffModal(${s.id})">
+      <div class="avatar" style="background:${s.color}">${init}</div>
+      <div class="gi"><div class="gn">${s.name}</div><div class="gd">${s.task} · $${s.salary}/day</div></div>
+      <span class="role-badge r-${s.role.toLowerCase()}">${s.role}</span></div>`;
+  });
+}
+
+// ── RENDER FINANCE ──
+function renderFinance() {
+  const salaries=staff.reduce((a,s)=>a+s.salary,0);
+  const roomRev=guests.reduce((a,g)=>a+(rooms.find(r=>r.id===g.room)?.price||0),0);
+  const extras=UPGRADES.filter(u=>u.bought&&['spa','restaurant'].includes(u.id)).reduce((a,u)=>a+(u.id==='spa'?200:150),0);
+  const utilities=UPGRADES.find(u=>u.id==='solar'&&u.bought)?70:100;
+  const totalExp=salaries+utilities+50;
+  const net=roomRev+extras-totalExp;
+  document.getElementById('fin-summary').innerHTML=`
+    <div class="fin-row"><span class="l">Balance</span><span class="neu">$${G.money.toLocaleString()}</span></div>
+    <div class="fin-row"><span class="l">Room Revenue</span><span class="pos">+$${roomRev}</span></div>
+    <div class="fin-row"><span class="l">Services</span><span class="pos">+$${extras}</span></div>
+    <div class="fin-row"><span class="l">Staff Salaries</span><span class="neg">-$${salaries}</span></div>
+    <div class="fin-row"><span class="l">Utilities</span><span class="neg">-$${utilities+50}</span></div>
+    <div class="fin-row" style="border-top:1px solid rgba(201,168,76,0.2);margin-top:4px;padding-top:6px">
+      <span class="l" style="font-weight:700">Net/Day</span>
+      <span class="${net>=0?'pos':'neg'}" style="font-size:14px">${net>=0?'+':''}$${net}</span></div>`;
+  drawOccChart();
+}
+
+function drawOccChart() {
+  const c=document.getElementById('occChart'); if(!c) return;
+  const cx=c.getContext('2d'); cx.clearRect(0,0,c.width,c.height);
+  cx.fillStyle='rgba(22,33,62,0.8)'; cx.fillRect(0,0,c.width,c.height);
+  const data=G.occHistory.slice(-20);
+  if(data.length<2){cx.fillStyle='rgba(255,255,255,0.1)';cx.font='11px sans-serif';cx.textAlign='center';cx.fillStyle='rgba(139,156,200,0.5)';cx.fillText('Play more to see history',c.width/2,c.height/2);return;}
+  const pad=8,w=c.width-pad*2,h=c.height-pad*2;
+  cx.strokeStyle='rgba(201,168,76,0.1)'; cx.lineWidth=0.5;
+  [25,50,75].forEach(y=>{const py=pad+h-(y/100)*h;cx.beginPath();cx.moveTo(pad,py);cx.lineTo(pad+w,py);cx.stroke();});
+  cx.strokeStyle='#C9A84C'; cx.lineWidth=2;
+  cx.beginPath();
+  data.forEach((v,i)=>{const px=pad+(i/(data.length-1))*w,py=pad+h-(v/100)*h;i===0?cx.moveTo(px,py):cx.lineTo(px,py);});
+  cx.stroke();
+  cx.fillStyle='rgba(201,168,76,0.08)';
+  cx.lineTo(pad+w,pad+h); cx.lineTo(pad,pad+h); cx.closePath(); cx.fill();
+  cx.fillStyle='rgba(139,156,200,0.6)'; cx.font='9px sans-serif'; cx.textAlign='left'; cx.fillText('Occupancy %',pad+2,pad+9);
+}
+
+// ── RENDER EVENTS ──
+function renderEvents() {
+  const el=document.getElementById('event-list'); el.innerHTML='';
+  if(!G.events.length){el.innerHTML='<div style="text-align:center;color:var(--muted);padding:20px;font-size:12px">No events yet!</div>';return;}
+  G.events.slice().reverse().forEach(e=>{
+    el.innerHTML+=`<div class="ev-item ev-${e.type}">
+      <span style="font-size:18px;flex-shrink:0">${e.icon}</span>
+      <div><div class="ev-txt">${e.text}</div><div class="ev-time">${e.time}</div></div></div>`;
+  });
+}
+
+// ── RENDER UPGRADES ──
+function renderUpgrades() {
+  const ul=document.getElementById('upg-list'); ul.innerHTML='';
+  UPGRADES.forEach(u=>{
+    const can=G.money>=u.cost;
+    ul.innerHTML+=`<div class="upg-item">
+      <div class="upg-icon">${u.icon}</div>
+      <div class="upg-info"><div class="upg-name">${u.name}</div><div class="upg-desc">${u.desc}</div><div class="upg-cost">💰 $${u.cost.toLocaleString()}</div></div>
+      ${u.bought?'<span style="font-size:11px;color:var(--green);font-weight:700">✓ OWNED</span>'
+        :`<button class="btn ${can?'btn-gold':'btn-red'}" onclick="buyUpgrade('${u.id}')" ${can?'':'disabled'} style="font-size:10px;padding:5px 7px">${can?'Buy':'Need $'+(u.cost-G.money).toLocaleString()}</button>`}</div>`;
+  });
+}
+
+// ── MODALS ──────────────────────────────────
+function openModal(title,body){document.getElementById('modal-title').textContent=title;document.getElementById('modal-body').innerHTML=body;document.getElementById('modal-overlay').classList.add('open');}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
+document.getElementById('modal-overlay').addEventListener('click',e=>{if(e.target===document.getElementById('modal-overlay'))closeModal();});
+
+function openCheckin() {
+  const vac=rooms.filter(r=>r.status==='vacant');
+  if(!vac.length){toast('No vacant rooms!','red');return;}
+  const opts=vac.map(r=>`<option value="${r.id}">Room ${r.num} — ${r.type} ($${r.price}/night)</option>`).join('');
+  openModal('Guest Check-In',`
+    <div class="fg"><label>Guest Name</label><input id="ci-name" placeholder="Leave blank for random name" /></div>
+    <div class="fg"><label>Room</label><select id="ci-room">${opts}</select></div>
+    <div class="fg"><label>Nights</label><input type="number" id="ci-nights" value="2" min="1" max="14" /></div>
+    <div class="fg"><label>Guest Type</label><select id="ci-bud">
+      <option value="budget">Budget Traveler</option>
+      <option value="standard" selected>Standard Guest</option>
+      <option value="luxury">Luxury Guest</option>
+      <option value="vip">VIP Guest ⭐</option></select></div>
+    <div class="btn-row"><button class="btn btn-gold" onclick="doCheckin()">✓ Confirm</button><button class="btn btn-red" onclick="closeModal()">Cancel</button></div>`);
+}
+
+function doCheckin() {
+  const name=document.getElementById('ci-name').value.trim()||NAMES[Math.floor(Math.random()*NAMES.length)];
+  const rid=parseInt(document.getElementById('ci-room').value);
+  const nights=parseInt(document.getElementById('ci-nights').value)||2;
+  const bud=document.getElementById('ci-bud').value;
+  const room=rooms.find(r=>r.id===rid); if(!room) return;
+  room.status='occupied';
+  const g={id:Date.now(),name,room:rid,night:1,nights,budget:bud,sat:80+Math.floor(Math.random()*15),color:AVATARCLRS[Math.floor(Math.random()*AVATARCLRS.length)],day:G.day};
+  room.guest=g; guests.push(g);
+  G.money+=room.price; G.revenue+=room.price; G.xp+=50;
+  addEvent('good','🏨',`${name} checked in to Room ${room.num} for ${nights} nights.`);
+  toast(`${name} checked into Room ${room.num}!`,'green');
+  closeModal(); renderPanel(); updateStats();
+}
+
+function openRoomModal(room) {
+  const btns=room.status!=='occupied'
+    ?`<button class="btn btn-gold" onclick="changeStatus(${room.id},'cleaning');closeModal()">🧹 Cleaning</button>
+      <button class="btn btn-green" onclick="changeStatus(${room.id},'vacant');closeModal()">✓ Vacant</button>
+      <button class="btn btn-red" onclick="changeStatus(${room.id},'maintenance');closeModal()">🔧 Maintenance</button>`
+    :`<button class="btn btn-red" onclick="checkout(${room.id});closeModal()">→ Check Out</button>`;
+  openModal(`Room ${room.num}`,`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <div style="background:var(--surface);border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:10px;color:var(--muted)">Type</div>
+        <div style="font-size:13px;font-weight:700;color:var(--gold-light)">${room.type}</div></div>
+      <div style="background:var(--surface);border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:10px;color:var(--muted)">Rate</div>
+        <div style="font-size:13px;font-weight:700;color:var(--green)">$${room.price}/night</div></div></div>
+    <div class="sat-row"><div class="sat-lbl">Cleanliness</div><div class="sat-bar"><div class="sat-fill" style="width:${room.clean}%;background:#2ECC71"></div></div><div class="sat-val">${room.clean}%</div></div>
+    <div class="sat-row"><div class="sat-lbl">Maintenance</div><div class="sat-bar"><div class="sat-fill" style="width:${room.maint}%;background:#3498DB"></div></div><div class="sat-val">${room.maint}%</div></div>
+    ${room.guest?`<div style="margin:10px 0;padding:8px;background:var(--surface);border-radius:8px;font-size:12px"><b>${room.guest.name}</b> — Night ${room.guest.night}/${room.guest.nights}<br><span style="color:var(--muted)">Satisfaction: ${room.guest.sat}%</span></div>`:''}
+    <div class="btn-row">${btns}</div>`);
+}
+
+function changeStatus(id,status){
+  const r=rooms.find(r=>r.id===id); if(!r) return;
+  r.status=status;
+  if(status==='cleaning'){r.clean=100;addEvent('gold','🧹',`Room ${r.num} cleaning started.`);}
+  if(status==='maintenance'){r.maint=100;addEvent('warn','🔧',`Room ${r.num} under maintenance.`);}
+  renderPanel();
+}
+
+function checkout(rid) {
+  const room=rooms.find(r=>r.id===rid); if(!room||!room.guest) return;
+  const g=room.guest;
+  const stars=Math.max(1,Math.min(5,Math.round(g.sat/20)));
+  const txts={5:['Perfect stay!','World-class!','Will return!'],4:['Great stay.','Lovely resort.'],3:['Decent stay.','Average.'],2:['Disappointed.'],1:['Very poor.']};
+  reviews.push({name:g.name.split(' ')[0]+' '+g.name.split(' ')[1]?.[0]+'.',stars,text:txts[stars][Math.floor(Math.random()*txts[stars].length)]});
+  G.rating=Math.max(1,Math.min(5,Math.round((G.rating+stars/2)*10)/10)); G.xp+=30;
+  addEvent('good','👋',`${g.name} checked out. Rated ${'★'.repeat(stars)}`);
+  toast(`${g.name} checked out! ${stars}★`,'gold');
+  guests.splice(guests.indexOf(g),1); room.guest=null; room.status='cleaning';
+  renderPanel(); updateStats();
+}
+
+function openGuestModal(g) {
+  const room=rooms.find(r=>r.id===g.room);
+  openModal(g.name,`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <div class="avatar" style="background:${g.color};width:48px;height:48px;font-size:18px">${g.name.split(' ').map(n=>n[0]).join('').slice(0,2)}</div>
+      <div><div style="font-size:14px;font-weight:700">${g.name}</div><div style="font-size:11px;color:var(--muted)">${g.budget.charAt(0).toUpperCase()+g.budget.slice(1)} Guest</div></div></div>
+    <div class="sat-row"><div class="sat-lbl">Satisfaction</div><div class="sat-bar"><div class="sat-fill" style="width:${g.sat}%;background:#C9A84C"></div></div><div class="sat-val">${g.sat}%</div></div>
+    <div style="font-size:11px;color:var(--muted);margin:8px 0">Room ${room?.num} · ${room?.type} · Night ${g.night}/${g.nights}</div>
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="sendAmenity(${g.id})">🎁 Send Amenity</button>
+      <button class="btn btn-red" onclick="checkout(${g.room});closeModal()">→ Check Out</button></div>`);
+}
+
+function sendAmenity(gid) {
+  const g=guests.find(x=>x.id===gid); if(!g) return;
+  if(G.money<20){toast('Not enough funds!','red');return;}
+  G.money-=20; g.sat=Math.min(100,g.sat+12);
+  addEvent('good','🎁',`Amenity sent to ${g.name}. Guest delighted!`);
+  toast(`Amenity sent! Guest happier 😊`,'gold'); closeModal(); renderPanel();
+}
+
+function openStaffModal(id) {
+  const s=staff.find(x=>x.id===id); if(!s) return;
+  openModal(s.name,`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <div class="avatar" style="background:${s.color};width:48px;height:48px;font-size:18px">${s.name.split(' ').map(n=>n[0]).join('').slice(0,2)}</div>
+      <div><div style="font-size:14px;font-weight:700">${s.name}</div><span class="role-badge r-${s.role.toLowerCase()}">${s.role}</span></div></div>
+    <div class="sat-row"><div class="sat-lbl">Morale</div><div class="sat-bar"><div class="sat-fill" style="width:${s.mood}%;background:#3498DB"></div></div><div class="sat-val">${s.mood}%</div></div>
+    <div style="font-size:12px;color:var(--muted);margin:8px 0">Task: ${s.task} · $${s.salary}/day</div>
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="giveBonus(${s.id})">💰 Bonus ($200)</button>
+      <button class="btn btn-red" onclick="fireStaff(${s.id})">🚪 Dismiss</button></div>`);
+}
+
+function giveBonus(id){const s=staff.find(x=>x.id===id);if(!s||G.money<200){toast('Insufficient funds!','red');return;}G.money-=200;s.mood=Math.min(100,s.mood+15);addEvent('good','💰',`Bonus given to ${s.name}!`);toast(`${s.name} is thrilled! 🎉`,'gold');closeModal();renderPanel();}
+function fireStaff(id){const i=staff.findIndex(x=>x.id===id);if(i<0)return;const n=staff[i].name;staff.splice(i,1);addEvent('warn','🚪',`${n} has left the hotel.`);toast(`${n} dismissed.`,'red');closeModal();renderPanel();}
+
+function openHire(){
+  const opts=ROLES.map((r,i)=>`<option value="${i}">${r} — $${ROLE_SAL[i]}/day</option>`).join('');
+  openModal('Hire Staff',`
+    <div class="fg"><label>Name</label><input id="h-name" placeholder="Leave blank for random" /></div>
+    <div class="fg"><label>Role</label><select id="h-role">${opts}</select></div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:12px">More staff = better service & satisfaction</div>
+    <div class="btn-row"><button class="btn btn-gold" onclick="doHire()">✓ Hire</button><button class="btn btn-red" onclick="closeModal()">Cancel</button></div>`);
+}
+
+function doHire(){
+  const ri=parseInt(document.getElementById('h-role').value);
+  const name=document.getElementById('h-name').value.trim()||NAMES[Math.floor(Math.random()*NAMES.length)];
+  staff.push({id:Date.now(),name,role:ROLES[ri],salary:ROLE_SAL[ri],mood:85+Math.floor(Math.random()*10),task:ROLE_TASK[ri],color:ROLE_CLR[ri]});
+  addEvent('good','👔',`${name} joined as ${ROLES[ri]}.`);
+  toast(`${name} hired!`,'green'); closeModal(); renderPanel();
+}
+
+function buyUpgrade(id){
+  const u=UPGRADES.find(x=>x.id===id); if(!u||u.bought||G.money<u.cost) return;
+  G.money-=u.cost; u.bought=true;
+  if(id==='rooms'){for(let i=0;i<4;i++)rooms.push({id:400+i+1,floor:4,num:400+i+1,type:'Suite',price:350,status:'vacant',guest:null,clean:100,maint:100});}
+  G.level=Math.min(10,G.level+1); G.satisfaction=Math.min(100,G.satisfaction+5);
+  addEvent('good',u.icon,`${u.name} unlocked!`);
+  toast(`${u.name} purchased! 🎉`,'gold'); renderPanel(); updateStats();
+}
+
+// ── EVENTS ──
+function addEvent(type,icon,text){
+  G.events.push({type,icon,text,time:`Day ${G.day} ${pad(G.hour)}:${pad(G.min)}`});
+  if(G.events.length>60) G.events.shift();
+  if(activeTab!=='events') document.getElementById('edot').style.display='block';
+}
+
+const RAND_EVENTS=[
+  {fn:()=>{const r=rooms[Math.floor(Math.random()*rooms.length)];r.maint=Math.max(20,r.maint-40);r.status='maintenance';addEvent('bad','🔧',`Equipment failure in Room ${r.num}!`);toast(`⚠️ Room ${r.num} breakdown!`,'red');}},
+  {fn:()=>{const g=guests[Math.floor(Math.random()*guests.length)];if(!g)return;g.sat=Math.min(100,g.sat+20);addEvent('good','🌟',`${g.name} praised the staff!`);toast('⭐ Compliment received!','gold');}},
+  {fn:()=>{const vac=rooms.filter(r=>r.status==='vacant');if(!vac.length)return;const r=vac[0];r.status='occupied';const vg={id:Date.now(),name:'VIP: '+NAMES[Math.floor(Math.random()*NAMES.length)],room:r.id,night:1,nights:3,budget:'vip',sat:92,color:'#C9A84C',day:G.day};r.guest=vg;guests.push(vg);G.money+=r.price*2;G.revenue+=r.price*2;addEvent('good','👑',`VIP guest arrived! Premium rate charged.`);toast('👑 VIP Guest arrived!','gold');}},
+  {fn:()=>{G.satisfaction=Math.max(50,G.satisfaction-5);addEvent('warn','🌧️','Bad weather affecting outdoor activities.');toast('🌧️ Weather disruption!','gold');}},
+  {fn:()=>{const f=Math.floor(Math.random()*500)+200;G.money-=f;addEvent('bad','💸',`Unexpected repair bill: -$${f}`);toast(`Repair: -$${f}`,'red');}},
+  {fn:()=>{G.money+=600;G.revenue+=600;addEvent('good','🎉','Tourism event! Deposit received. +$600');toast('🎉 Tourism bonus! +$600','green');}},
+];
+let evCooldown=0;
+
+// ── GAME LOOP ─────────────────────────────────
+function pad(n){return String(n).padStart(2,'0');}
+function getOcc(){return rooms.length?rooms.filter(r=>r.status==='occupied').length/rooms.length:0;}
+
+function updateStats(){
+  G.money=Math.round(G.money);
+  document.getElementById('s-money').textContent='$'+G.money.toLocaleString();
+  document.getElementById('s-rev').textContent='+$'+G.revenue.toLocaleString();
+  document.getElementById('s-occ').textContent=Math.round(getOcc()*100)+'%';
+  document.getElementById('s-rat').textContent=G.rating.toFixed(1);
+  document.getElementById('s-sat').textContent=G.satisfaction+'%';
+  document.getElementById('s-time').textContent=`Day ${G.day} — ${pad(G.hour)}:${pad(G.min)}`;
+}
+
+function tick(){
+  if(G.speed===0) return;
+  G.min+=5*G.speed;
+  if(G.min>=60){G.min-=60;G.hour++;if(G.hour>=24){G.hour=0;newDay();}}
+
+  if(G.min%30===0){
+    rooms.forEach(r=>{
+      if(r.status==='occupied'){r.clean=Math.max(30,r.clean-3);}
+      if(r.status==='cleaning'){r.clean=Math.min(100,r.clean+25);if(r.clean>=100)r.status='vacant';}
+      if(r.status==='maintenance'){r.maint=Math.min(100,r.maint+20);if(r.maint>=100)r.status='vacant';}
+    });
+  }
+
+  if(G.min===0){
+    guests.forEach(g=>{
+      const room=rooms.find(r=>r.id===g.room);
+      const bonus=Math.min(15,staff.length*2);
+      g.sat=Math.max(20,Math.min(100,g.sat+(room&&room.clean>70?1:-2)+bonus*0.1-1));
+    });
+    G.satisfaction=guests.length?Math.round(guests.reduce((a,g)=>a+g.sat,0)/guests.length):Math.max(60,G.satisfaction-1);
+    G.rating=Math.max(1,Math.min(5,Math.round((G.rating+(G.satisfaction>75?0.01:-0.02))*10)/10));
+    // Auto-checkout overstayed guests
+    guests.filter(g=>g.night>=g.nights).forEach(g=>checkout(g.room));
+    guests.forEach(g=>g.night++);
+    // Random new guest
+    if(Math.random()<0.12*G.speed&&rooms.some(r=>r.status==='vacant'))autoCheckin();
+  }
+
+  evCooldown--;
+  if(evCooldown<=0&&Math.random()<0.004*G.speed){
+    RAND_EVENTS[Math.floor(Math.random()*RAND_EVENTS.length)].fn();
+    evCooldown=50;
+  }
+
+  G.xp+=0.1*G.speed;
+  if(G.xp>=G.xpNext){G.xp-=G.xpNext;G.level++;G.xpNext=Math.round(G.xpNext*1.5);addEvent('good','🏆',`Hotel reached Level ${G.level}!`);toast(`🏆 Level ${G.level}!`,'gold');}
+
+  updateStats();
+  renderPanel();
+}
+
+function newDay(){
+  G.day++; G.revenue=0;
+  const sal=staff.reduce((a,s)=>a+s.salary,0);
+  const util=UPGRADES.find(u=>u.id==='solar'&&u.bought)?70:100;
+  const exp=sal+util+50; G.money-=exp; G.expenses+=exp;
+  const rev=guests.reduce((a,g)=>a+(rooms.find(r=>r.id===g.room)?.price||0),0);
+  const extras=UPGRADES.filter(u=>u.bought&&['spa','restaurant'].includes(u.id)).reduce((a,u)=>a+(u.id==='spa'?200:150),0);
+  G.money+=rev+extras; G.revenue+=rev+extras;
+  G.occHistory.push(Math.round(getOcc()*100));
+  addEvent('gold','📅',`Day ${G.day} begins. Revenue: $${rev+extras}. Costs: $${exp}.`);
+  if(G.money<0){addEvent('bad','⚠️','Balance is negative! Fill more rooms or reduce costs.');toast('⚠️ Negative balance!','red');}
+}
+
+function autoCheckin(){
+  const vac=rooms.filter(r=>r.status==='vacant');
+  if(!vac.length) return;
+  const room=vac[Math.floor(Math.random()*vac.length)];
+  const name=NAMES[Math.floor(Math.random()*NAMES.length)];
+  const nights=1+Math.floor(Math.random()*4);
+  const buds=['budget','standard','standard','luxury'];
+  const g={id:Date.now(),name,room:room.id,night:1,nights,budget:buds[Math.floor(Math.random()*buds.length)],sat:75+Math.floor(Math.random()*20),color:AVATARCLRS[Math.floor(Math.random()*AVATARCLRS.length)],day:G.day};
+  room.status='occupied'; room.guest=g; guests.push(g);
+  G.money+=room.price; G.revenue+=room.price;
+  addEvent('good','🏨',`${name} booked Room ${room.num} online.`);
+}
+
+// ── CONTROLS ──
+function setSpeed(s){G.speed=s;document.querySelectorAll('.spd-btn').forEach((b,i)=>b.classList.toggle('active',[1,3,0][i]===s));}
+function toast(msg,type='gold'){const el=document.createElement('div');el.className=`toast t-${type}`;el.textContent=msg;document.getElementById('toast-container').appendChild(el);setTimeout(()=>el.remove(),2800);}
+
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return;
+  if(e.key==='c'||e.key==='C') openCheckin();
+  if(e.key==='h'||e.key==='H') openHire();
+  if(e.key==='+'||e.key==='='){zoom=Math.min(2,zoom+0.1);}
+  if(e.key==='-'){zoom=Math.max(0.4,zoom-0.1);}
+  if(e.key==='1') setSpeed(1);
+  if(e.key==='3') setSpeed(3);
+  if(e.key==='0') setSpeed(0);
+  if(e.key==='Escape') closeModal();
+});
+
+let drag=false,lmx=0,lmy=0;
+canvas.addEventListener('mousedown',e=>{drag=true;lmx=e.clientX;lmy=e.clientY;});
+window.addEventListener('mousemove',e=>{if(!drag)return;camX+=e.clientX-lmx;camY+=e.clientY-lmy;lmx=e.clientX;lmy=e.clientY;});
+window.addEventListener('mouseup',()=>drag=false);
+canvas.addEventListener('wheel',e=>{zoom=Math.max(0.4,Math.min(2,zoom-e.deltaY*0.001));e.preventDefault();},{passive:false});
+
+// ── INIT ──────────────────────────────────────
+function init(){
+  resize();
+  // Seed guests
+  [[0,'standard'],[2,'luxury'],[5,'budget']].forEach(([ri,bud],i)=>{
+    const room=rooms[ri];
+    const g={id:i+1,name:NAMES[i],room:room.id,night:1,nights:2+i,budget:bud,sat:78+i*5,color:AVATARCLRS[i],day:1};
+    room.status='occupied'; room.guest=g; guests.push(g);
+  });
+  addEvent('gold','🏨','Welcome to Hotel Oasis Manager! Your luxury resort awaits.');
+  addEvent('good','✅','3 guests have checked in. Start growing your empire!');
+  updateStats(); renderPanel();
+  draw(); // Start animation loop
+  setInterval(tick,200);
+}
+
+init();
+</script>
+</body>
+</html>
